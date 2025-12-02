@@ -1,71 +1,288 @@
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css';
-import { columns } from "@/features/fleet/components/columns";
-import { deliveries } from "@/features/fleet/data";
-import { DataTable } from "@/features/fleet/components/data-table";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
+import "leaflet/dist/leaflet.css"
+import { DataTable } from "@/features/fleet/components/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import { Badge } from "@/components/ui/Badge"
+import {
+  DashboardSummary,
+  DeliveryOrder,
+  fetchDashboardSummary,
+  fetchDeliveries,
+  fetchGarages,
+  fetchVehicles,
+  Garage,
+  Vehicle,
+} from "@/lib/api"
+
+type DeliveryRow = {
+  id: number
+  client_name: string
+  status: string
+  deadline: string
+}
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendente",
+  in_transit: "Em rota",
+  delivered: "Entregue",
+  cancelled: "Cancelado",
+}
+
+const statusVariant: Record<string, "warning" | "success" | "danger" | "secondary"> = {
+  pending: "warning",
+  in_transit: "secondary",
+  delivered: "success",
+  cancelled: "danger",
+}
 
 const Dashboard = () => {
-    const kpis = [
-        { title: "Veículos em Rota", value: "12" },
-        { title: "Entregas Pendentes", value: "8" },
-        { title: "Faturamento do Dia", value: "R$ 12.500,00" },
-    ]
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [deliveries, setDeliveries] = useState<DeliveryRow[]>([])
+  const [garages, setGarages] = useState<Garage[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [error, setError] = useState("")
 
-    const vehiclePositions = [
-        { id: 1, position: [-23.5505, -46.6333], name: "Veículo 1" },
-        { id: 2, position: [-23.5605, -46.6433], name: "Veículo 2" },
-        { id: 3, position: [-23.5405, -46.6233], name: "Veículo 3" },
-    ]
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [summaryData, deliveriesData, garagesData, vehiclesData] =
+          await Promise.all([
+            fetchDashboardSummary(),
+            fetchDeliveries(),
+            fetchGarages(),
+            fetchVehicles(),
+          ])
 
-    return (
-        <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-3">
-                {kpis.map((kpi) => (
-                    <Card key={kpi.title}>
-                        <CardHeader>
-                            <CardTitle>{kpi.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{kpi.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+        setSummary(summaryData)
+        setDeliveries(deliveriesData.results || [])
+        setGarages(garagesData.results || [])
+        setVehicles(vehiclesData.results || [])
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao carregar dashboard."
+        setError(message)
+      }
+    }
 
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card className="col-span-2">
-                    <CardHeader>
-                        <CardTitle>Mapa de Veículos</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: '400px', width: '100%' }}>
-                            <TileLayer
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            />
-                            {vehiclePositions.map((vehicle) => (
-                                <Marker key={vehicle.id} position={vehicle.position}>
-                                    <Popup>{vehicle.name}</Popup>
-                                </Marker>
-                            ))}
-                        </MapContainer>
-                    </CardContent>
-                </Card>
-            </div>
+    load()
+  }, [])
 
-            <div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Últimas Entregas</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <DataTable columns={columns} data={deliveries} />
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+  const deliveryColumns: ColumnDef<DeliveryRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: "client_name",
+        header: "Cliente",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const status = row.getValue("status") as string
+          return (
+            <Badge variant={statusVariant[status] || "secondary"}>
+              {statusLabels[status] || status}
+            </Badge>
+          )
+        },
+      },
+      {
+        accessorKey: "deadline",
+        header: "Prazo",
+        cell: ({ row }) => {
+          const value = row.getValue("deadline") as string
+          const date = value ? new Date(value) : null
+          return (
+            <span className="text-sm text-muted-foreground">
+              {date ? date.toLocaleString("pt-BR") : "-"}
+            </span>
+          )
+        },
+      },
+    ],
+    []
+  )
+
+  const vehiclePositions = garages
+    .filter(
+      (garage) =>
+        typeof garage.latitude === "number" && typeof garage.longitude === "number"
     )
+    .map((garage) => ({
+      id: garage.id,
+      position: [garage.latitude as number, garage.longitude as number] as [
+        number,
+        number
+      ],
+      name: garage.name,
+      address: `${garage.address}, ${garage.street_number} (CEP: ${garage.postal_code || "-"})`,
+    }))
+
+  const vehicleMarkers = vehicles
+    .filter(
+      (v) =>
+        typeof v.last_latitude === "number" &&
+        typeof v.last_longitude === "number"
+    )
+    .map((v) => ({
+      id: v.id,
+      position: [v.last_latitude as number, v.last_longitude as number] as [
+        number,
+        number
+      ],
+      label: `${v.model} (${v.plate})`,
+      status: v.status,
+    }))
+
+  const mapCenter =
+    vehicleMarkers.length > 0
+      ? vehicleMarkers[0].position
+      : vehiclePositions.length > 0
+      ? vehiclePositions[0].position
+      : [-23.5505, -46.6333]
+
+  return (
+    <div className="space-y-6">
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Veículos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {summary ? summary.vehicles : "-"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Garagens</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {summary ? summary.garages : "-"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Entregas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {summary ? summary.delivery_orders : "-"}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Em rota: {summary ? summary.in_transit_orders : "-"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Motoristas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {summary ? summary.drivers : "-"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="col-span-2">
+          <CardHeader>
+            <CardTitle>Mapa de garagens e veículos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {vehiclePositions.length === 0 && vehicleMarkers.length === 0 ? (
+              <p className="text-muted-foreground">
+                Nenhuma garagem ou veículo com coordenadas. Defina posição (CEP) ou marque veículos em trânsito.
+              </p>
+            ) : (
+              <MapContainer
+                center={mapCenter}
+                zoom={12}
+                style={{ height: "400px", width: "100%" }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {vehiclePositions.map((item) => (
+                  <Marker key={item.id} position={item.position}>
+                    <Popup>
+                      <div className="space-y-1">
+                        <p className="font-semibold">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.address}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+                {vehicleMarkers.map((item) => (
+                  <Marker key={`v-${item.id}`} position={item.position}>
+                    <Popup>
+                      <div className="space-y-1">
+                        <p className="font-semibold">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Status: {item.status}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ultimas entregas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable columns={deliveryColumns} data={deliveries} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Veiculos cadastrados</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {vehicles.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Nenhum veiculo cadastrado.
+              </p>
+            ) : (
+              vehicles.slice(0, 5).map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  className="flex items-center justify-between border-b pb-2 last:border-b-0"
+                >
+                  <div>
+                    <p className="font-medium">{vehicle.model}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Placa: {vehicle.plate}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="capitalize">
+                    {vehicle.type}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
 }
 
 export default Dashboard

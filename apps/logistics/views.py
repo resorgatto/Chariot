@@ -1,14 +1,17 @@
 from django.contrib.gis.geos import Point
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import requests
 
-from .models import DeliveryArea, DeliveryOrder, Driver, Vehicle
+from .models import DeliveryArea, DeliveryOrder, DeliveryStatus, Driver, Garage, Vehicle, VehicleStatus
 from .serializers import (
     CoverageCheckSerializer,
     DeliveryAreaSerializer,
     DeliveryOrderSerializer,
     DriverSerializer,
+    GarageSerializer,
     VehicleSerializer,
 )
 
@@ -42,6 +45,14 @@ class DeliveryOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
 
+class GarageViewSet(viewsets.ModelViewSet):
+    queryset = Garage.objects.all()
+    serializer_class = GarageSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+
+
+
 class CoverageCheckView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -61,5 +72,90 @@ class CoverageCheckView(APIView):
             {
                 "covered": bool(matched_areas),
                 "areas": matched_areas,
+            }
+        )
+
+
+class DashboardSummaryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            {
+                "vehicles": Vehicle.objects.count(),
+                "drivers": Driver.objects.count(),
+                "delivery_orders": DeliveryOrder.objects.count(),
+                "in_transit_orders": DeliveryOrder.objects.filter(
+                    status=DeliveryStatus.IN_TRANSIT
+                ).count(),
+                "garages": Garage.objects.count(),
+            }
+        )
+
+
+class CepLookupView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        cep = (request.query_params.get("cep") or "").replace("-", "").strip()
+        if not cep:
+            return Response({"detail": "CEP nao informado."}, status=400)
+
+        try:
+            resp = requests.get(
+                f"https://viacep.com.br/ws/{cep}/json/",
+                timeout=5,
+            )
+            if resp.status_code != 200:
+                return Response({"detail": "CEP invalido."}, status=400)
+            data = resp.json()
+            if data.get("erro"):
+                return Response({"detail": "CEP invalido."}, status=400)
+        except requests.RequestException:
+            return Response(
+                {"detail": "Falha ao consultar o CEP."}, status=502
+            )
+
+        address_line = ", ".join(
+            filter(
+                None,
+                [
+                    data.get("logradouro"),
+                    data.get("bairro"),
+                    f"{data.get('localidade')}-{data.get('uf')}",
+                ],
+            )
+        )
+
+        lat = lon = None
+        try:
+            geo_resp = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "format": "json",
+                    "q": address_line,
+                    "limit": 1,
+                },
+                headers={"User-Agent": "EcoFleet/1.0"},
+                timeout=6,
+            )
+            if geo_resp.status_code == 200:
+                results = geo_resp.json()
+                if results:
+                    lat = float(results[0]["lat"])
+                    lon = float(results[0]["lon"])
+        except requests.RequestException:
+            pass
+
+        return Response(
+            {
+                "cep": data.get("cep", cep),
+                "street": data.get("logradouro", ""),
+                "neighborhood": data.get("bairro", ""),
+                "city": data.get("localidade", ""),
+                "state": data.get("uf", ""),
+                "address": address_line,
+                "latitude": lat,
+                "longitude": lon,
             }
         )

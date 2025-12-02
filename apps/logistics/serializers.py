@@ -1,13 +1,60 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
-from .models import DeliveryArea, DeliveryOrder, Driver, Vehicle
-
+from django.contrib.gis.geos import Point
+from .models import DeliveryArea, DeliveryOrder, Driver, Garage, Vehicle, Route
 
 class VehicleSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False, allow_null=True)
+    last_latitude = serializers.SerializerMethodField(read_only=True)
+    last_longitude = serializers.SerializerMethodField(read_only=True)
+    set_latitude = serializers.FloatField(write_only=True, required=False)
+    set_longitude = serializers.FloatField(write_only=True, required=False)
+
     class Meta:
         model = Vehicle
-        fields = ['id', 'plate', 'model', 'capacity_kg', 'type']
+        fields = [
+            'id',
+            'plate',
+            'model',
+            'capacity_kg',
+            'type',
+            'status',
+            'garage',
+            'image',
+            'last_latitude',
+            'last_longitude',
+            'set_latitude',
+            'set_longitude',
+        ]
+
+    def get_last_latitude(self, obj):
+        if obj.last_location:
+            return obj.last_location.y
+        return None
+
+    def get_last_longitude(self, obj):
+        if obj.last_location:
+            return obj.last_location.x
+        return None
+
+    def _apply_location(self, instance, validated_data):
+        lat = validated_data.pop("set_latitude", None)
+        lon = validated_data.pop("set_longitude", None)
+        if lat is not None and lon is not None:
+            instance.last_location = Point(lon, lat, srid=4326)
+        return instance
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance = self._apply_location(instance, validated_data)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance = self._apply_location(instance, validated_data)
+        instance.save()
+        return instance
 
 
 class DriverSerializer(serializers.ModelSerializer):
@@ -22,11 +69,18 @@ class DriverSerializer(serializers.ModelSerializer):
 
 
 class DeliveryOrderSerializer(serializers.ModelSerializer):
+    driver_name = serializers.SerializerMethodField(read_only=True)
+    vehicle_plate = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = DeliveryOrder
         fields = [
             'id',
             'client_name',
+            'driver',
+            'driver_name',
+            'vehicle',
+            'vehicle_plate',
             'pickup_location',
             'dropoff_location',
             'status',
@@ -46,3 +100,74 @@ class DeliveryAreaSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryArea
         fields = ['id', 'name']
+
+
+class GarageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Garage
+        fields = [
+            'id',
+            'name',
+            'address',
+            'postal_code',
+            'street_number',
+            'capacity',
+            'latitude',
+            'longitude',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_driver_name(self, obj):
+        if obj.driver and obj.driver.user:
+            return obj.driver.user.get_full_name() or obj.driver.user.username
+        return None
+
+    def get_vehicle_plate(self, obj):
+        if obj.vehicle:
+            return obj.vehicle.plate
+        return None
+
+
+class RouteSerializer(serializers.ModelSerializer):
+    start_latitude = serializers.FloatField(write_only=True)
+    start_longitude = serializers.FloatField(write_only=True)
+    end_latitude = serializers.FloatField(write_only=True)
+    end_longitude = serializers.FloatField(write_only=True)
+    vehicle_name = serializers.CharField(source="vehicle.model", read_only=True)
+    driver_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Route
+        fields = [
+            "id",
+            "name",
+            "vehicle",
+            "vehicle_name",
+            "driver",
+            "driver_name",
+            "start_latitude",
+            "start_longitude",
+            "end_latitude",
+            "end_longitude",
+            "distance_km",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def create(self, validated_data):
+        start_lat = validated_data.pop("start_latitude")
+        start_lon = validated_data.pop("start_longitude")
+        end_lat = validated_data.pop("end_latitude")
+        end_lon = validated_data.pop("end_longitude")
+        validated_data["start_location"] = Point(start_lon, start_lat, srid=4326)
+        validated_data["end_location"] = Point(end_lon, end_lat, srid=4326)
+        return super().create(validated_data)
+
+    def get_driver_name(self, obj):
+        if obj.driver and obj.driver.user:
+            return obj.driver.user.get_full_name() or obj.driver.user.username
+        return None

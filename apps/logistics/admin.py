@@ -1,14 +1,15 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 
-from .models import DeliveryArea, DeliveryOrder, Driver, Vehicle
+from .models import DeliveryArea, DeliveryOrder, Driver, Garage, Vehicle, Route
 
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ("plate", "model", "capacity_kg", "type")
-    list_filter = ("type",)
+    list_display = ("plate", "model", "capacity_kg", "type", "garage")
+    list_filter = ("type", "garage")
     search_fields = ("plate", "model")
+    autocomplete_fields = ("garage",)
 
 
 @admin.register(Driver)
@@ -36,3 +37,17 @@ class DeliveryAreaAdmin(GISModelAdmin):
     default_lat = 0
     default_lon = 0
     default_zoom = 2
+
+
+@admin.register(Garage)
+class GarageAdmin(admin.ModelAdmin):
+    list_display = ("name", "capacity", "address", "postal_code", "street_number")
+    search_fields = ("name", "address", "postal_code")
+
+
+@admin.register(Route)
+class RouteAdmin(admin.ModelAdmin):
+    list_display = ("name", "vehicle", "status", "distance_km", "created_at")
+    list_filter = ("status",)
+    search_fields = ("name", "vehicle__plate", "vehicle__model")
+    autocomplete_fields = ("vehicle",)

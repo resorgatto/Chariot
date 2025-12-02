@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 
+from datetime import timedelta
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,11 +38,16 @@ ALLOWED_HOSTS = config(
     cast=Csv(),
 )
 
+# Default credentials (auto-create superuser if provided)
+DEFAULT_SUPERUSER_USERNAME = config("DEFAULT_SUPERUSER_USERNAME", default=None)
+DEFAULT_SUPERUSER_PASSWORD = config("DEFAULT_SUPERUSER_PASSWORD", default=None)
+
 
 # Application definition
 ENABLE_ADMIN = config("ENABLE_ADMIN", default=True, cast=bool)
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -59,6 +65,7 @@ if ENABLE_ADMIN:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -134,9 +141,12 @@ REST_FRAMEWORK = {
     ),
 }
 
+ACCESS_TOKEN_MINUTES = config("ACCESS_TOKEN_LIFETIME", default=5, cast=int)
+REFRESH_TOKEN_MINUTES = config("REFRESH_TOKEN_LIFETIME", default=60, cast=int)
+
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": config("ACCESS_TOKEN_LIFETIME", default=5, cast=int),
-    "REFRESH_TOKEN_LIFETIME": config("REFRESH_TOKEN_LIFETIME", default=60, cast=int),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_MINUTES),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=REFRESH_TOKEN_MINUTES),
 }
 
 SPECTACULAR_SETTINGS = {
@@ -194,3 +204,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH', default='/lib/x86_64-linux-gnu/libgdal.so.36')
 os.environ.setdefault('GDAL_LIBRARY_PATH', GDAL_LIBRARY_PATH)
+
+# CORS / frontend integration
+CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=True, cast=bool)
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
+
+# Media files (uploads)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

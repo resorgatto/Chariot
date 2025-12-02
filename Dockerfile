@@ -23,9 +23,11 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
-RUN chmod +x /app/entrypoint.sh
+# Keep entrypoint executable even when the app directory is bind-mounted (e.g., on Windows)
+RUN cp /app/entrypoint.sh /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

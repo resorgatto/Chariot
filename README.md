@@ -15,7 +15,11 @@ Aplicacao Django com DRF, PostGIS e Celery para gestao de frota, motoristas e or
 - Frota: `/api/vehicles/`
 - Motoristas: `/api/drivers/`
 - Ordens de entrega: `/api/delivery-orders/`
+- Garagens: `/api/garages/`
+- Rotas: `/api/routes/`
 - Cobertura por coordenada: `POST /api/coverage-check/` (lat/long)
+- Resumo para dashboard: `GET /api/dashboard-summary/`
+- Usuarios (apenas admin cria/lista): `/api/users/`
 - Documentacao: `/api/schema/swagger-ui/`
 
 ## Tarefas em background (Celery)

@@ -5,6 +5,12 @@ import LoginPage from '@/features/auth/LoginPage';
 import PrivateRoute from '@/router/PrivateRoute';
 import FleetPage from './pages/FleetPage';
 import MapPage from './pages/MapPage';
+import GaragesPage from './pages/GaragesPage';
+import UsersPage from './pages/UsersPage';
+import DriversPage from './pages/DriversPage';
+import DeliveryOrdersPage from './pages/DeliveryOrdersPage';
+import CoverageCheckPage from './pages/CoverageCheckPage';
+import DriverOrdersPage from './pages/DriverOrdersPage';
 
 function App() {
   return (
@@ -33,6 +39,54 @@ function App() {
             element={
               <Layout>
                 <MapPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="garages"
+            element={
+              <Layout>
+                <GaragesPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <Layout>
+                <UsersPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="drivers"
+            element={
+              <Layout>
+                <DriversPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <Layout>
+                <DeliveryOrdersPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="coverage"
+            element={
+              <Layout>
+                <CoverageCheckPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="my-orders"
+            element={
+              <Layout>
+                <DriverOrdersPage />
               </Layout>
             }
           />
