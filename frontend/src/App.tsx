@@ -11,6 +11,7 @@ import DriversPage from './pages/DriversPage';
 import DeliveryOrdersPage from './pages/DeliveryOrdersPage';
 import CoverageCheckPage from './pages/CoverageCheckPage';
 import DriverOrdersPage from './pages/DriverOrdersPage';
+import ServiceBoardPage from './pages/ServiceBoardPage';
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function App() {
             element={
               <Layout>
                 <CoverageCheckPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="service-board"
+            element={
+              <Layout>
+                <ServiceBoardPage />
               </Layout>
             }
           />

@@ -61,6 +61,10 @@ const Sidebar: React.FC = () => {
               <ClipboardList className="w-6 h-6" />
               {!isCollapsed && <span className="ml-3">Ordens</span>}
             </NavLink>
+            <NavLink to="/service-board" className={navLinkClasses}>
+              <ClipboardList className="w-6 h-6" />
+              {!isCollapsed && <span className="ml-3">Agenda O.S.</span>}
+            </NavLink>
             <NavLink to="/coverage" className={navLinkClasses}>
               <LocateFixed className="w-6 h-6" />
               {!isCollapsed && <span className="ml-3">Cobertura</span>}

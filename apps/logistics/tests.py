@@ -211,6 +211,30 @@ class LogisticsAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["count"], 1)
 
+    def test_delivery_order_create_accepts_geojson(self):
+        client = APIClient()
+        client.force_authenticate(user=self.admin)
+        payload = {
+            "client_name": "BRAVEND",
+            "pickup_location": {
+                "type": "Point",
+                "coordinates": [-46.5657155, -23.5414685],
+            },
+            "dropoff_location": {
+                "type": "Point",
+                "coordinates": [-46.5152317, -23.5346405],
+            },
+            "status": DeliveryStatus.PENDING,
+            "deadline": (timezone.now() + timedelta(hours=2)).isoformat(),
+        }
+        resp = client.post(reverse("deliveryorder-list"), payload, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            resp.data["pickup_location"]["coordinates"],
+            [-46.5657155, -23.5414685],
+        )
+        self.assertEqual(resp.data["status"], DeliveryStatus.PENDING)
+
     def test_coverage_check_endpoint(self):
         polygon = Polygon(
             (

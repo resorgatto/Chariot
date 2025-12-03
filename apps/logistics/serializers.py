@@ -90,6 +90,75 @@ class DeliveryOrderSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['created_at', 'updated_at']
 
+    def get_driver_name(self, obj):
+        if obj.driver and obj.driver.user:
+            return obj.driver.user.get_full_name() or obj.driver.user.username
+        return None
+
+    def get_vehicle_plate(self, obj):
+        if obj.vehicle:
+            return obj.vehicle.plate
+        return None
+
+    def _to_point(self, lon, lat, field_name):
+        try:
+            return Point(float(lon), float(lat), srid=4326)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError(
+                {field_name: "Coordenadas invalidas. Use numeros em [lon, lat]."}
+            )
+
+    def _coerce_point(self, value, field_name):
+        """
+        Accept GeoJSON Point objects or [lon, lat] lists and convert to Point.
+        Raises a validation error with a friendly message instead of letting
+        the model blow up with a TypeError.
+        """
+        if isinstance(value, Point):
+            return value
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            lon, lat = value
+            return self._to_point(lon, lat, field_name)
+        if isinstance(value, dict):
+            coords = value.get("coordinates")
+            if isinstance(coords, (list, tuple)) and len(coords) == 2:
+                lon, lat = coords
+                return self._to_point(lon, lat, field_name)
+            lat = value.get("lat") or value.get("latitude")
+            lon = value.get("lon") or value.get("lng") or value.get("longitude")
+            if lat is not None and lon is not None:
+                return self._to_point(lon, lat, field_name)
+        raise serializers.ValidationError(
+            {field_name: "Use GeoJSON {'type': 'Point', 'coordinates': [lon, lat]} ou [lon, lat]."}
+        )
+
+    def _apply_points(self, validated_data):
+        for field in ("pickup_location", "dropoff_location"):
+            if field in validated_data:
+                validated_data[field] = self._coerce_point(validated_data[field], field)
+        return validated_data
+
+    def create(self, validated_data):
+        validated_data = self._apply_points(validated_data)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data = self._apply_points(validated_data)
+        return super().update(instance, validated_data)
+
+    def _point_to_geojson(self, geom):
+        if not geom:
+            return None
+        return {"type": "Point", "coordinates": [geom.x, geom.y]}
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["pickup_location"] = self._point_to_geojson(instance.pickup_location)
+        data["dropoff_location"] = self._point_to_geojson(instance.dropoff_location)
+        data["driver_name"] = self.get_driver_name(instance)
+        data["vehicle_plate"] = self.get_vehicle_plate(instance)
+        return data
+
 
 class CoverageCheckSerializer(serializers.Serializer):
     latitude = serializers.FloatField()

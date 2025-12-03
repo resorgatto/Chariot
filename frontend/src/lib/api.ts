@@ -148,6 +148,10 @@ export type DeliveryOrder = {
   client_name: string;
   status: string;
   deadline: string;
+  driver?: number | null;
+  driver_name?: string | null;
+  vehicle?: number | null;
+  vehicle_plate?: string | null;
   pickup_location?: any;
   dropoff_location?: any;
 };
@@ -335,6 +339,8 @@ export const createDeliveryOrder = (payload: {
   pickup_longitude: number;
   dropoff_latitude: number;
   dropoff_longitude: number;
+  driver?: number | null;
+  vehicle?: number | null;
 }) =>
   apiFetch<DeliveryOrder>("/api/delivery-orders/", {
     method: "POST",
@@ -342,6 +348,8 @@ export const createDeliveryOrder = (payload: {
       client_name: payload.client_name,
       status: payload.status || "pending",
       deadline: payload.deadline,
+      driver: payload.driver ?? null,
+      vehicle: payload.vehicle ?? null,
       pickup_location: {
         type: "Point",
         coordinates: [payload.pickup_longitude, payload.pickup_latitude],

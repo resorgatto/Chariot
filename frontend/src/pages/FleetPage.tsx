@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
-import { createVehicle, fetchGarages, fetchVehicles, updateVehicle, lookupCep, Garage, Vehicle } from "@/lib/api"
+import {
+  createVehicle,
+  fetchGarages,
+  fetchVehicles,
+  updateVehicle,
+  lookupCep,
+  Garage,
+  Vehicle,
+} from "@/lib/api"
 
 const vehicleTypes = [
   { value: "truck", label: "Caminhao" },
@@ -28,8 +36,13 @@ const FleetPage = () => {
     type: "truck",
     garage: "",
   })
-  const [statusForm, setStatusForm] = useState<Record<number, { status: string; lat: string; lon: string; cep?: string }>>({})
-  const [statusCepLoading, setStatusCepLoading] = useState<Record<number, boolean>>({})
+  const [statusForm, setStatusForm] = useState<
+    Record<number, { status: string; lat: string; lon: string; cep?: string }>
+  >({})
+  const [statusCepLoading, setStatusCepLoading] =
+    useState<Record<number, boolean>>({})
+  const [garageForm, setGarageForm] = useState<Record<number, string>>({})
+  const [garageSaving, setGarageSaving] = useState<number | null>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -38,8 +51,15 @@ const FleetPage = () => {
         fetchVehicles(),
         fetchGarages(),
       ])
-      setVehicles(vehiclesData.results || [])
+      const fetchedVehicles = vehiclesData.results || []
+      setVehicles(fetchedVehicles)
       setGarages(garagesData.results || [])
+      setGarageForm(
+        fetchedVehicles.reduce<Record<number, string>>((acc, v) => {
+          acc[v.id] = v.garage ? String(v.garage) : ""
+          return acc
+        }, {})
+      )
       setError("")
     } catch (err) {
       const message =
@@ -103,13 +123,11 @@ const FleetPage = () => {
         payload.set_longitude = Number(current.lon)
       }
       const updated = await updateVehicle(vehicle.id, payload)
-      setVehicles((prev) =>
-        prev.map((v) => (v.id === vehicle.id ? updated : v))
-      )
+      setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? updated : v)))
       setError("")
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Erro ao atualizar veículo."
+        err instanceof Error ? err.message : "Erro ao atualizar veiculo."
       setError(message)
     }
   }
@@ -123,7 +141,7 @@ const FleetPage = () => {
     }
     const cep = current.cep?.replace(/\D/g, "") || ""
     if (!cep) {
-      setError("Informe um CEP para preencher a posição.")
+      setError("Informe um CEP para preencher a posicao.")
       return
     }
     setStatusCepLoading((prev) => ({ ...prev, [vehicle.id]: true }))
@@ -148,13 +166,32 @@ const FleetPage = () => {
     }
   }
 
+  const handleUpdateGarage = async (vehicle: Vehicle) => {
+    const value = garageForm[vehicle.id] || ""
+    const garageId = value ? Number(value) : null
+    setGarageSaving(vehicle.id)
+    try {
+      const updated = await updateVehicle(vehicle.id, {
+        garage: garageId || undefined,
+      })
+      setVehicles((prev) => prev.map((v) => (v.id === vehicle.id ? updated : v)))
+      setError("")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao atualizar garagem."
+      setError(message)
+    } finally {
+      setGarageSaving(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Gestao de Frota</h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre um veiculo e associe a uma garagem. Faça login como admin/admin123 antes de salvar.
+            Cadastre um veiculo e associe a uma garagem.
           </p>
         </div>
         <Button onClick={() => setShowModal(true)}>Novo Veiculo</Button>
@@ -197,7 +234,35 @@ const FleetPage = () => {
                   </p>
                 )}
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Status e posição</p>
+                  <Label className="text-xs">Trocar garagem</Label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={garageForm[vehicle.id] ?? ""}
+                    onChange={(e) =>
+                      setGarageForm((prev) => ({
+                        ...prev,
+                        [vehicle.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Selecione</option>
+                    {garages.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleUpdateGarage(vehicle)}
+                    disabled={garageSaving === vehicle.id}
+                  >
+                    {garageSaving === vehicle.id ? "Salvando..." : "Atualizar garagem"}
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Status e posicao</p>
                   <select
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     value={
@@ -208,15 +273,21 @@ const FleetPage = () => {
                         ...prev,
                         [vehicle.id]: {
                           status: e.target.value,
-                          lat: prev[vehicle.id]?.lat ?? (vehicle.last_latitude ? String(vehicle.last_latitude) : ""),
-                          lon: prev[vehicle.id]?.lon ?? (vehicle.last_longitude ? String(vehicle.last_longitude) : ""),
+                          lat:
+                            prev[vehicle.id]?.lat ??
+                            (vehicle.last_latitude ? String(vehicle.last_latitude) : ""),
+                          lon:
+                            prev[vehicle.id]?.lon ??
+                            (vehicle.last_longitude
+                              ? String(vehicle.last_longitude)
+                              : ""),
                         },
                       }))
                     }
                   >
-                    <option value="available">Disponível</option>
-                    <option value="in_transit">Em trânsito</option>
-                    <option value="maintenance">Manutenção</option>
+                    <option value="available">Disponivel</option>
+                    <option value="in_transit">Em transito</option>
+                    <option value="maintenance">Manutencao</option>
                   </select>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
@@ -229,9 +300,16 @@ const FleetPage = () => {
                         setStatusForm((prev) => ({
                           ...prev,
                           [vehicle.id]: {
-                            status: prev[vehicle.id]?.status || vehicle.status || "available",
+                            status:
+                              prev[vehicle.id]?.status ||
+                              vehicle.status ||
+                              "available",
                             lat: e.target.value,
-                            lon: prev[vehicle.id]?.lon ?? (vehicle.last_longitude ? String(vehicle.last_longitude) : ""),
+                            lon:
+                              prev[vehicle.id]?.lon ??
+                              (vehicle.last_longitude
+                                ? String(vehicle.last_longitude)
+                                : ""),
                           },
                         }))
                       }
@@ -246,8 +324,15 @@ const FleetPage = () => {
                         setStatusForm((prev) => ({
                           ...prev,
                           [vehicle.id]: {
-                            status: prev[vehicle.id]?.status || vehicle.status || "available",
-                            lat: prev[vehicle.id]?.lat ?? (vehicle.last_latitude ? String(vehicle.last_latitude) : ""),
+                            status:
+                              prev[vehicle.id]?.status ||
+                              vehicle.status ||
+                              "available",
+                            lat:
+                              prev[vehicle.id]?.lat ??
+                              (vehicle.last_latitude
+                                ? String(vehicle.last_latitude)
+                                : ""),
                             lon: e.target.value,
                           },
                         }))
@@ -262,9 +347,20 @@ const FleetPage = () => {
                         setStatusForm((prev) => ({
                           ...prev,
                           [vehicle.id]: {
-                            status: prev[vehicle.id]?.status || vehicle.status || "available",
-                            lat: prev[vehicle.id]?.lat ?? (vehicle.last_latitude ? String(vehicle.last_latitude) : ""),
-                            lon: prev[vehicle.id]?.lon ?? (vehicle.last_longitude ? String(vehicle.last_longitude) : ""),
+                            status:
+                              prev[vehicle.id]?.status ||
+                              vehicle.status ||
+                              "available",
+                            lat:
+                              prev[vehicle.id]?.lat ??
+                              (vehicle.last_latitude
+                                ? String(vehicle.last_latitude)
+                                : ""),
+                            lon:
+                              prev[vehicle.id]?.lon ??
+                              (vehicle.last_longitude
+                                ? String(vehicle.last_longitude)
+                                : ""),
                             cep: e.target.value,
                           },
                         }))
@@ -285,7 +381,7 @@ const FleetPage = () => {
                     size="sm"
                     onClick={() => handleUpdateStatus(vehicle)}
                   >
-                    Atualizar status/posição
+                    Atualizar status/posicao
                   </Button>
                 </div>
               </CardContent>
@@ -307,7 +403,8 @@ const FleetPage = () => {
               </button>
             </div>
             <p className="text-sm text-muted-foreground mb-2">
-              Dica: use placa no formato ABC-1234, selecione a garagem e envie uma foto (opcional).
+              Dica: use placa no formato ABC-1234, selecione a garagem e envie uma
+              foto (opcional).
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -385,11 +482,11 @@ const FleetPage = () => {
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  As garagens podem ser criadas na aba Garagens (use o CEP para preencher o endereço).
+                  As garagens podem ser criadas na aba Garagens.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image">Imagem do caminhão</Label>
+                <Label htmlFor="image">Imagem do veiculo</Label>
                 <Input
                   id="image"
                   type="file"
@@ -399,7 +496,7 @@ const FleetPage = () => {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Formatos comuns (jpg, png). Tamanho recomendado &lt; 2MB.
+                  Formatos comuns (jpg, png). Tamanho recomendado {"<"} 2MB.
                 </p>
               </div>
               <div className="flex justify-end gap-2">
