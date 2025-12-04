@@ -267,7 +267,7 @@ export default function App() {
   const hours = Array.from({ length: 13 }, (_, i) => i + START_HOUR);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-100 text-slate-700 font-sans overflow-hidden">
+    <div className="flex flex-col h-screen w-full bg-white text-slate-700 font-sans overflow-hidden">
       
       {/* --- Top Bar --- */}
       <header className="flex-none bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm z-10">
@@ -295,7 +295,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* --- Left Sidebar (Order List) --- */}
-        <aside className="w-80 bg-white border-r border-slate-200 flex flex-col z-10 shadow-lg">
+        <aside className="w-80 bg-slate-50 border-r border-slate-200 flex flex-col z-10 shadow-lg">
           
           {/* Filters */}
           <div className="flex flex-col">
@@ -374,7 +374,7 @@ export default function App() {
             </div>
 
             {/* Grid Body */}
-            <div className="flex relative min-w-max" style={{ height: hours.length * PIXELS_PER_HOUR }}>
+            <div className="flex relative min-w-max bg-white" style={{ height: hours.length * PIXELS_PER_HOUR }}>
                 
                 {/* Time Columns (Gutter) */}
                 <div className="w-10 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col text-xs text-slate-400 font-bold sticky left-0 z-10">
@@ -389,7 +389,7 @@ export default function App() {
                 {MOCK_DRIVERS.map(driver => (
                     <div 
                         key={driver.id} 
-                        className="w-64 flex-shrink-0 border-r border-slate-100 relative bg-slate-50/30"
+                        className="w-64 flex-shrink-0 border-r border-slate-100 relative bg-white"
                         onDragOver={handleDragOver}
                     >
                          {/* Background Grid Lines */}

@@ -4,9 +4,9 @@ import Header from './Header';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="flex h-screen bg-gradient-to-br from-white via-[#f2f4ff] to-[#ffe9e0]">
+    <div className="flex h-screen bg-transparent">
       <Sidebar />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 bg-transparent">
         <Header />
         <main className="p-6">{children}</main>
       </div>

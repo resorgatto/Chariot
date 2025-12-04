@@ -492,7 +492,7 @@ export default function ServiceBoardPage() {
   const hours = Array.from({ length: 13 }, (_, i) => i + START_HOUR);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-100 text-slate-700 font-sans overflow-hidden">
+    <div className="service-board-light flex flex-col h-screen w-full bg-white text-slate-700 font-sans overflow-hidden">
       
       {/* --- Top Bar --- */}
       <header className="flex-none bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm z-10">

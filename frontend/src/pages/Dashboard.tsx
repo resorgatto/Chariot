@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
+import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { DataTable } from "@/features/fleet/components/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/Badge"
+import { useTheme } from "@/components/ThemeProvider"
 import {
   DashboardSummary,
-  DeliveryOrder,
   fetchDashboardSummary,
   fetchDeliveries,
   fetchGarages,
@@ -37,12 +38,40 @@ const statusVariant: Record<string, "warning" | "success" | "danger" | "secondar
   cancelled: "danger",
 }
 
+const pinSvg = (fill: string, inner: string) => `
+  <svg width="36" height="36" viewBox="0 0 36 36">
+    <path d="M18 2C11.373 2 6 7.373 6 14c0 7.774 12 20 12 20s12-12.226 12-20C30 7.373 24.627 2 18 2z" fill="${fill}"/>
+    ${inner}
+  </svg>
+`
+
+const vehicleIcon = L.divIcon({
+  html: pinSvg(
+    "#F97316",
+    `<path d="M11 17.5c0-.552.448-1 1-1h12c.552 0 1 .448 1 1v2.5h-1c0 1.105-.895 2-2 2s-2-.895-2-2h-4c0 1.105-.895 2-2 2s-2-.895-2-2h-1v-2.5zm2.5-4.5 1.2-2.4c.17-.34.52-.55.9-.55h6.8c.38 0 .73.21.9.55L25.5 13H13.5z" fill="white"/>`
+  ),
+  className: "",
+  iconSize: [36, 36],
+  iconAnchor: [18, 34],
+})
+
+const garageIcon = L.divIcon({
+  html: pinSvg(
+    "#EA580C",
+    `<path d="M12 17.5V14l6-4 6 4v3.5h-2V22h-8v-4.5z" fill="white"/><path d="M14.5 21.5h7" stroke="white" stroke-width="1.5" stroke-linecap="round"/>`
+  ),
+  className: "",
+  iconSize: [36, 36],
+  iconAnchor: [18, 34],
+})
+
 const Dashboard = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([])
   const [garages, setGarages] = useState<Garage[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [error, setError] = useState("")
+  const { theme } = useTheme()
 
   useEffect(() => {
     const load = async () => {
@@ -56,7 +85,17 @@ const Dashboard = () => {
           ])
 
         setSummary(summaryData)
-        setDeliveries(deliveriesData.results || [])
+        setDeliveries(
+          (deliveriesData.results as DeliveryOrder[] | undefined)?.map(
+            (d) =>
+              ({
+                id: d.id,
+                client_name: d.client_name,
+                status: d.status,
+                deadline: d.deadline,
+              } as DeliveryRow)
+          ) || []
+        )
         setGarages(garagesData.results || [])
         setVehicles(vehiclesData.results || [])
       } catch (err) {
@@ -203,17 +242,18 @@ const Dashboard = () => {
                 Nenhuma garagem ou veículo com coordenadas. Defina posição (CEP) ou marque veículos em trânsito.
               </p>
             ) : (
-              <MapContainer
-                center={mapCenter}
-                zoom={12}
-                style={{ height: "400px", width: "100%" }}
-              >
+        <MapContainer
+          center={mapCenter}
+          zoom={12}
+          style={{ height: "400px", width: "100%" }}
+          className="bg-white dashboard-map"
+        >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
                 {vehiclePositions.map((item) => (
-                  <Marker key={item.id} position={item.position}>
+                  <Marker key={item.id} position={item.position} icon={garageIcon}>
                     <Popup>
                       <div className="space-y-1">
                         <p className="font-semibold">{item.name}</p>
@@ -225,7 +265,7 @@ const Dashboard = () => {
                   </Marker>
                 ))}
                 {vehicleMarkers.map((item) => (
-                  <Marker key={`v-${item.id}`} position={item.position}>
+                  <Marker key={`v-${item.id}`} position={item.position} icon={vehicleIcon}>
                     <Popup>
                       <div className="space-y-1">
                         <p className="font-semibold">{item.label}</p>

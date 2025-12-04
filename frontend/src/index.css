@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 200 25% 97%;
-    --foreground: 220 25% 10%;
+    --background: 24 100% 98%;
+    --foreground: 24 35% 12%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card: 24 100% 99%;
+    --card-foreground: 24 35% 12%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover: 24 100% 99%;
+    --popover-foreground: 24 35% 12%;
 
-    --primary: 15 85% 55%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 30 90% 55%;
+    --primary-foreground: 24 100% 98%;
 
-    --secondary: 200 18% 92%;
-    --secondary-foreground: 220 25% 15%;
+    --secondary: 30 35% 92%;
+    --secondary-foreground: 24 35% 18%;
 
-    --muted: 200 18% 92%;
-    --muted-foreground: 210 16% 45%;
+    --muted: 30 20% 90%;
+    --muted-foreground: 25 18% 40%;
 
-    --accent: 260 55% 52%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 24 90% 60%;
+    --accent-foreground: 24 100% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 78% 58%;
+    --destructive-foreground: 24 100% 98%;
 
-    --border: 220 18% 88%;
-    --input: 220 18% 88%;
-    --ring: 15 85% 55%;
+    --border: 28 22% 85%;
+    --input: 28 22% 85%;
+    --ring: 30 90% 55%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 24 18% 10%;
+    --foreground: 24 22% 94%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 24 18% 12%;
+    --card-foreground: 24 22% 94%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 24 18% 12%;
+    --popover-foreground: 24 22% 94%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 30 90% 58%;
+    --primary-foreground: 24 100% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 24 18% 18%;
+    --secondary-foreground: 24 22% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 24 16% 20%;
+    --muted-foreground: 24 24% 75%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 24 85% 60%;
+    --accent-foreground: 24 100% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 24 100% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 24 20% 24%;
+    --input: 24 20% 24%;
+    --ring: 30 90% 58%;
   }
 }
 
@@ -73,7 +73,84 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', 'DM Sans', sans-serif;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 132, 89, 0.08), transparent 40%),
-      radial-gradient(circle at 80% 0%, rgba(95, 83, 255, 0.1), transparent 35%);
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255, 180, 120, 0.16), transparent 42%),
+      radial-gradient(circle at 78% 5%, rgba(255, 206, 150, 0.12), transparent 36%),
+      linear-gradient(135deg, hsl(var(--background)), hsl(var(--accent) / 0.12));
+  }
+
+  .dark body {
+    background:
+      radial-gradient(120% 120% at 15% 10%, rgba(255, 153, 94, 0.18), transparent 55%),
+      radial-gradient(90% 90% at 90% 8%, rgba(255, 193, 120, 0.16), transparent 45%),
+      linear-gradient(145deg, #0f0a09 0%, #1a100c 38%, #22130c 100%);
+  }
+
+  /* Harmonizar caixas e pop-ups no dark mode */
+  .dark .bg-white {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground));
+  }
+  .dark .bg-white\/80 {
+    background-color: color-mix(in srgb, hsl(var(--card)) 80%, transparent) !important;
+    color: hsl(var(--card-foreground));
+  }
+  .dark .bg-white\/70 {
+    background-color: color-mix(in srgb, hsl(var(--card)) 70%, transparent) !important;
+    color: hsl(var(--card-foreground));
+  }
+  .dark .bg-white\/50 {
+    background-color: color-mix(in srgb, hsl(var(--card)) 50%, transparent) !important;
+    color: hsl(var(--card-foreground));
+  }
+  .dark .leaflet-popup-content-wrapper {
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+  }
+  .dark .leaflet-popup-tip {
+    background: hsl(var(--card));
+  }
+
+  /* Ajustar textos escuros para o foreground no dark mode */
+  .dark .text-gray-900,
+  .dark .text-slate-900,
+  .dark .text-black {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir pop-ups acima do mapa */
+  .leaflet-pane,
+  .leaflet-map-pane,
+  .leaflet-popup-pane {
+    z-index: 400;
+  }
+  .leaflet-popup {
+    z-index: 450;
+  }
+
+  /* Forçar agenda O.S. clara mesmo no dark */
+  .dark .service-board-light {
+    background: #fff !important;
+    color: #1f2937 !important;
+  }
+  .dark .service-board-light .bg-white {
+    background-color: #fff !important;
+    color: #1f2937 !important;
+  }
+  .dark .service-board-light .bg-slate-50,
+  .dark .service-board-light .bg-slate-50\/30,
+  .dark .service-board-light .bg-[#f0f4f8] {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+  }
+
+  /* Minimapa do dashboard claro no dark mode (escopo apenas no dashboard) */
+  .dark .dashboard-map.leaflet-container,
+  .dark .dashboard-map .leaflet-container {
+    background: #fff !important;
+  }
+  .dark .dashboard-map .leaflet-tile {
+    filter: none !important;
   }
 }

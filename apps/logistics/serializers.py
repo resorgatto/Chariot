@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+import math
 from django.contrib.gis.geos import Point
 from .models import DeliveryArea, DeliveryOrder, Driver, Garage, Vehicle, Route
 
@@ -166,9 +167,81 @@ class CoverageCheckSerializer(serializers.Serializer):
 
 
 class DeliveryAreaSerializer(serializers.ModelSerializer):
+    radius_km = serializers.FloatField(write_only=True, required=False)
+    center_latitude = serializers.FloatField(write_only=True, required=False)
+    center_longitude = serializers.FloatField(write_only=True, required=False)
+    centroid_latitude = serializers.SerializerMethodField(read_only=True)
+    centroid_longitude = serializers.SerializerMethodField(read_only=True)
+    estimated_radius_km = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = DeliveryArea
-        fields = ['id', 'name']
+        fields = [
+            'id',
+            'name',
+            'radius_km',
+            'center_latitude',
+            'center_longitude',
+            'centroid_latitude',
+            'centroid_longitude',
+            'estimated_radius_km',
+        ]
+
+    def _build_circle(self, lon: float, lat: float, radius_km: float):
+        """
+        Create an approximate circular polygon around the given point.
+        Uses a projected SRID (3857) to buffer in meters, then transforms back.
+        """
+        center = Point(lon, lat, srid=4326)
+        projected = center.transform(3857, clone=True)
+        buffered = projected.buffer(radius_km * 1000)
+        return buffered.transform(4326, clone=True)
+
+    def validate(self, attrs):
+        if self.instance is None:  # creation
+            missing = [
+                key
+                for key in ("radius_km", "center_latitude", "center_longitude")
+                if attrs.get(key) is None
+            ]
+            if missing:
+                raise serializers.ValidationError(
+                    "Informe latitude, longitude e radius_km para criar a área."
+                )
+            if attrs.get("radius_km", 0) <= 0:
+                raise serializers.ValidationError(
+                    {"radius_km": "Use um valor maior que zero."}
+                )
+        return attrs
+
+    def create(self, validated_data):
+        radius_km = validated_data.pop("radius_km", None)
+        center_lat = validated_data.pop("center_latitude", None)
+        center_lon = validated_data.pop("center_longitude", None)
+
+        if radius_km is not None and center_lat is not None and center_lon is not None:
+            validated_data["area"] = self._build_circle(center_lon, center_lat, radius_km)
+        return super().create(validated_data)
+
+    def get_centroid_latitude(self, obj):
+        if obj.area:
+            return obj.area.centroid.y
+        return None
+
+    def get_centroid_longitude(self, obj):
+        if obj.area:
+            return obj.area.centroid.x
+        return None
+
+    def get_estimated_radius_km(self, obj):
+        if not obj.area:
+            return None
+        # Approximate a radius using area equivalence on projected meters
+        projected = obj.area.transform(3857, clone=True)
+        if projected.area <= 0:
+            return None
+        radius_m = math.sqrt(projected.area / math.pi)
+        return round(radius_m / 1000, 3)
 
 
 class GarageSerializer(serializers.ModelSerializer):

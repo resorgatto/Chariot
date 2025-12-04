@@ -167,6 +167,14 @@ export type DashboardSummary = {
 export const fetchDashboardSummary = () =>
   apiFetch<DashboardSummary>("/api/dashboard-summary/");
 
+export type CoverageArea = {
+  id: number;
+  name: string;
+  centroid_latitude?: number | null;
+  centroid_longitude?: number | null;
+  estimated_radius_km?: number | null;
+};
+
 export const fetchVehicles = () =>
   apiFetch<{ results: Vehicle[]; count: number }>("/api/vehicles/");
 
@@ -378,6 +386,20 @@ export const updateDeliveryOrder = (
 // Coverage check
 export const checkCoverage = (payload: { latitude: number; longitude: number }) =>
   apiFetch<{ covered: boolean; areas: any[] }>("/api/coverage-check/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const fetchCoverageAreas = () =>
+  apiFetch<{ results: CoverageArea[]; count: number }>("/api/delivery-areas/");
+
+export const createCoverageArea = (payload: {
+  name: string;
+  center_latitude: number;
+  center_longitude: number;
+  radius_km: number;
+}) =>
+  apiFetch<CoverageArea>("/api/delivery-areas/", {
     method: "POST",
     body: JSON.stringify(payload),
   });

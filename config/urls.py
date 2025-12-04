@@ -16,6 +16,7 @@ from apps.logistics.views import (
     CepLookupView,
     CoverageCheckView,
     DashboardSummaryView,
+    DeliveryAreaViewSet,
     DeliveryOrderViewSet,
     DriverViewSet,
     GarageViewSet,
@@ -27,6 +28,7 @@ router.register(r'vehicles', VehicleViewSet)
 router.register(r'drivers', DriverViewSet)
 router.register(r'delivery-orders', DeliveryOrderViewSet)
 router.register(r'garages', GarageViewSet)
+router.register(r'delivery-areas', DeliveryAreaViewSet)
 router.register(r'users', UserViewSet)
 
 

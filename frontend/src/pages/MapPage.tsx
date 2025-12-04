@@ -1,8 +1,36 @@
 import { useMemo } from "react"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { useQuery } from "@tanstack/react-query"
 import { fetchVehicles, fetchGarages } from "@/lib/api"
+
+const pinSvg = (fill: string, inner: string) => `
+  <svg width="36" height="36" viewBox="0 0 36 36">
+    <path d="M18 2C11.373 2 6 7.373 6 14c0 7.774 12 20 12 20s12-12.226 12-20C30 7.373 24.627 2 18 2z" fill="${fill}"/>
+    ${inner}
+  </svg>
+`
+
+const vehicleIcon = L.divIcon({
+  html: pinSvg(
+    "#2563eb",
+    `<path d="M11 17.5c0-.552.448-1 1-1h12c.552 0 1 .448 1 1v2.5h-1c0 1.105-.895 2-2 2s-2-.895-2-2h-4c0 1.105-.895 2-2 2s-2-.895-2-2h-1v-2.5zm2.5-4.5 1.2-2.4c.17-.34.52-.55.9-.55h6.8c.38 0 .73.21.9.55L25.5 13H13.5z" fill="white"/>`
+  ),
+  className: "",
+  iconSize: [36, 36],
+  iconAnchor: [18, 34],
+})
+
+const garageIcon = L.divIcon({
+  html: pinSvg(
+    "#0f766e",
+    `<path d="M12 17.5V14l6-4 6 4v3.5h-2V22h-8v-4.5z" fill="white"/><path d="M14.5 21.5h7" stroke="white" stroke-width="1.5" stroke-linecap="round"/>`
+  ),
+  className: "",
+  iconSize: [36, 36],
+  iconAnchor: [18, 34],
+})
 
 const MapPage = () => {
   const { data, isLoading, error } = useQuery({
@@ -69,6 +97,7 @@ const MapPage = () => {
                 vehicle.last_latitude as number,
                 vehicle.last_longitude as number,
               ]}
+              icon={vehicleIcon}
             >
               <Popup>
                 <div className="space-y-1">
@@ -87,6 +116,7 @@ const MapPage = () => {
             <Marker
               key={`g-${garage.id}`}
               position={[garage.latitude as number, garage.longitude as number]}
+              icon={garageIcon}
             >
               <Popup>
                 <div className="space-y-1">

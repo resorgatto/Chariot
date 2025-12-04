@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
-import { Truck } from "lucide-react"
 import { loginRequest } from "@/lib/api"
 
 const LoginPage = () => {
@@ -38,25 +37,22 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="w-full h-screen lg:grid lg:grid-cols-2">
+    <div className="w-full h-screen lg:grid lg:grid-cols-2 bg-background">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
         <div
-          className="absolute inset-0 bg-zinc-900"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `url(/chariot-logo.png)`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
+            backgroundImage:
+              'linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.55)), radial-gradient(circle at 90% 90%, rgba(0,0,0,0.35), rgba(0,0,0,0.6) 35%), url("/logo.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
           }}
-        >
-          <div className="absolute inset-0 bg-black opacity-50" />
-        </div>
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <img src="/chariot-logo.png" alt="Chariot" className="h-14 w-auto bg-white rounded-lg shadow-sm p-2" />
-        </div>
+        />
+        <div className="relative z-20 flex items-center text-lg font-medium"></div>
         <div className="relative z-20 mt-auto space-y-3">
-          <p className="text-2xl font-semibold">Chariot</p>
-          <p className="text-lg max-w-md">
+          <p className="text-2xl font-semibold text-white">Chariot</p>
+          <p className="text-lg max-w-md text-white">
             Orquestre sua frota com clareza. Cadastre garagens, associe caminhões e monitore rotas com a Chariot.
           </p>
         </div>
@@ -64,7 +60,7 @@ const LoginPage = () => {
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">Entrar na Chariot</h1>
+            <h1 className="text-3xl font-bold dark:text-white">Entrar na Chariot</h1>
             <p className="text-balance text-muted-foreground">
               Acesse sua conta para comandar a frota com estilo.
             </p>
@@ -74,7 +70,7 @@ const LoginPage = () => {
               Use admin / admin123 para acessar e testar o sistema.
             </p>
             <div className="grid gap-2">
-              <Label htmlFor="username">Usuario</Label>
+              <Label htmlFor="username" className="dark:text-white">Usuario</Label>
               <Input
                 id="username"
                 type="text"
@@ -87,7 +83,7 @@ const LoginPage = () => {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className="dark:text-white">Senha</Label>
               </div>
               <Input
                 id="password"

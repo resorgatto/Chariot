@@ -110,6 +110,7 @@ class LogisticsAPITests(APITestCase):
         self.coverage_url = reverse("coverage-check")
         self.garage_list_url = reverse("garage-list")
         self.dashboard_url = reverse("dashboard-summary")
+        self.delivery_area_list_url = reverse("deliveryarea-list")
         self.user_list_url = reverse("user-list")
         self.route_list_url = reverse("route-list")
 
@@ -256,6 +257,21 @@ class LogisticsAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertTrue(resp.data["covered"])
         self.assertEqual(len(resp.data["areas"]), 1)
+
+    def test_delivery_area_create_via_api(self):
+        client = APIClient()
+        client.force_authenticate(user=self.admin)
+        payload = {
+            "name": "Area raio 5km",
+            "center_latitude": -23.55,
+            "center_longitude": -46.63,
+            "radius_km": 5,
+        }
+        resp = client.post(self.delivery_area_list_url, payload, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data["name"], payload["name"])
+        self.assertIsNotNone(resp.data.get("centroid_latitude"))
+        self.assertIsNotNone(resp.data.get("estimated_radius_km"))
 
     def test_garage_crud_admin(self):
         client = APIClient()

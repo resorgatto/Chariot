@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Home, Map, Truck, LogOut, Building2, Users, ClipboardList, LocateFixed, BadgeCheck } from 'lucide-react';
 import { clearTokens } from '@/lib/api';
+import { useTheme } from './ThemeProvider';
 
 const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem("is_staff") === "true" || localStorage.getItem("is_superuser") === "true";
   const isDriver = localStorage.getItem("is_driver") === "true";
@@ -15,18 +17,28 @@ const Sidebar: React.FC = () => {
   };
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center p-2 text-base font-normal text-gray-900 rounded-lg transition-all duration-200 hover:bg-slate-100 ${isActive ? 'bg-slate-100 border-l-4 border-slate-900' : ''}`;
+    `flex items-center p-2 text-base font-normal rounded-lg transition-all duration-200 text-slate-900 dark:text-white hover:bg-slate-100/50 dark:hover:bg-white/10 ${isActive ? 'bg-slate-100/50 dark:bg-white/10 border-l-4 border-slate-900 dark:border-white' : ''}`;
 
   return (
-    <div className={`flex flex-col bg-white shadow-md transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <div
+      className={`group/sidebar flex flex-col bg-transparent shadow-md transition-all duration-300 ${
+        isCollapsed ? 'w-20' : 'w-64'
+      }`}
+      onMouseEnter={() => setIsCollapsed(false)}
+      onMouseLeave={() => setIsCollapsed(true)}
+    >
       <div className="flex items-center justify-between p-4">
         {!isCollapsed && (
           <div className="flex items-center gap-3">
-            <img src="/chariot-logo.png" alt="Chariot" className="h-12 w-auto bg-white rounded-lg shadow-sm p-1.5" />
-            <span className="text-xl font-bold text-slate-900">Chariot</span>
+            <img src="/logo2.png" alt="Chariot" className="h-12 w-auto object-contain" />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">Chariot</span>
           </div>
         )}
-        <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 rounded-md hover:bg-slate-100 transition-all duration-200">
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 rounded-md hover:bg-slate-100/50 dark:hover:bg-white/10 transition-all duration-200 text-slate-900 dark:text-white"
+          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+        >
           {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
         </button>
       </div>
@@ -77,10 +89,10 @@ const Sidebar: React.FC = () => {
           </NavLink>
         ) : null}
       </nav>
-      <div className="p-4 mt-auto">
+      <div className="p-4 mt-auto space-y-2">
         <button
           onClick={handleLogout}
-          className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg w-full hover:bg-slate-100 transition-all duration-200"
+          className="flex items-center p-2 text-base font-normal text-slate-900 dark:text-white rounded-lg w-full hover:bg-slate-100/50 dark:hover:bg-white/10 transition-all duration-200"
         >
           <LogOut className="w-6 h-6" />
           {!isCollapsed && <span className="ml-3">Logout</span>}

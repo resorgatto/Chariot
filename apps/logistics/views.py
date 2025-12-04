@@ -1,6 +1,5 @@
 from django.contrib.gis.geos import Point
-from rest_framework import permissions, viewsets
-from rest_framework.decorators import action
+from rest_framework import permissions, viewsets, status as drf_status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import requests
@@ -44,6 +43,35 @@ class DeliveryOrderViewSet(viewsets.ModelViewSet):
     serializer_class = DeliveryOrderSerializer
     permission_classes = [IsAdminOrReadOnly]
 
+    def get_permissions(self):
+        # Admins can tudo, drivers podem alterar status apenas das ordens atribuídas
+        if self.action in ["update", "partial_update"]:
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
+    def partial_update(self, request, *args, **kwargs):
+        # Admin segue fluxo normal
+        if request.user.is_staff:
+            return super().partial_update(request, *args, **kwargs)
+
+        driver_profile = getattr(request.user, "driver_profile", None)
+        if not driver_profile:
+            return Response({"detail": "Apenas motoristas podem atualizar ordens."}, status=drf_status.HTTP_403_FORBIDDEN)
+
+        instance = self.get_object()
+        if instance.driver_id != driver_profile.id:
+            return Response({"detail": "Esta ordem não está atribuída a você."}, status=drf_status.HTTP_403_FORBIDDEN)
+
+        # Restringe campos que o motorista pode alterar
+        status_value = request.data.get("status")
+        if status_value is None:
+            return Response({"detail": "Informe o campo 'status'."}, status=drf_status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(instance, data={"status": status_value}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
 
 class GarageViewSet(viewsets.ModelViewSet):
     queryset = Garage.objects.all()
@@ -51,6 +79,10 @@ class GarageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
 
+class DeliveryAreaViewSet(viewsets.ModelViewSet):
+    queryset = DeliveryArea.objects.all()
+    serializer_class = DeliveryAreaSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
 class CoverageCheckView(APIView):
