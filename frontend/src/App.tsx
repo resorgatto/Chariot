@@ -14,92 +14,115 @@ import DriverOrdersPage from './pages/DriverOrdersPage';
 import ServiceBoardPage from './pages/ServiceBoardPage';
 
 function App() {
+  const isAdmin =
+    localStorage.getItem("is_staff") === "true" ||
+    localStorage.getItem("is_superuser") === "true";
+  const isDriver = localStorage.getItem("is_driver") === "true";
+
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<PrivateRoute />}>
-          <Route
-            path="dashboard"
-            element={
-              <Layout>
-                <Dashboard />
-              </Layout>
-            }
-          />
-          <Route
-            path="fleet"
-            element={
-              <Layout>
-                <FleetPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="map"
-            element={
-              <Layout>
-                <MapPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="garages"
-            element={
-              <Layout>
-                <GaragesPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="users"
-            element={
-              <Layout>
-                <UsersPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="drivers"
-            element={
-              <Layout>
-                <DriversPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="orders"
-            element={
-              <Layout>
-                <DeliveryOrdersPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="coverage"
-            element={
-              <Layout>
-                <CoverageCheckPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="service-board"
-            element={
-              <Layout>
-                <ServiceBoardPage />
-              </Layout>
-            }
-          />
-          <Route
-            path="my-orders"
-            element={
-              <Layout>
-                <DriverOrdersPage />
-              </Layout>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          {isAdmin ? (
+            <>
+              <Route
+                path="dashboard"
+                element={
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                }
+              />
+              <Route
+                path="fleet"
+                element={
+                  <Layout>
+                    <FleetPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="map"
+                element={
+                  <Layout>
+                    <MapPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="garages"
+                element={
+                  <Layout>
+                    <GaragesPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="users"
+                element={
+                  <Layout>
+                    <UsersPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="drivers"
+                element={
+                  <Layout>
+                    <DriversPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <Layout>
+                    <DeliveryOrdersPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="coverage"
+                element={
+                  <Layout>
+                    <CoverageCheckPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="service-board"
+                element={
+                  <Layout>
+                    <ServiceBoardPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/"
+                element={<Navigate to="/dashboard" replace />}
+              />
+              <Route
+                path="*"
+                element={<Navigate to="/dashboard" replace />}
+              />
+            </>
+          ) : isDriver ? (
+            <>
+              <Route
+                path="my-orders"
+                element={
+                  <Layout>
+                    <DriverOrdersPage />
+                  </Layout>
+                }
+              />
+              <Route path="/" element={<Navigate to="/my-orders" replace />} />
+              <Route path="*" element={<Navigate to="/my-orders" replace />} />
+            </>
+          ) : (
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          )}
         </Route>
       </Routes>
     </Router>

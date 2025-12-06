@@ -1,0 +1,147 @@
+.page {
+  padding: 1rem;
+}
+
+.headerTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.headerDescription {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.tabsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.orderCard {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.orderCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.orderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.clientName {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.status, .vehicle, .garage {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.orderId {
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .orderCard {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #334155;
+  }
+  .clientName {
+    color: #ffffff;
+  }
+  .orderId {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+}
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 1rem;
+    padding-top: 4rem; /* For mobile */
+}
+
+.modalContent {
+    width: 100%;
+    max-width: 42rem; /* max-w-xl */
+    background-color: #ffffff;
+    border-radius: 1rem; /* rounded-t-2xl md:rounded-2xl */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 768px) { /* md breakpoint */
+    .modalOverlay {
+        align-items: center;
+        padding-top: 1rem;
+    }
+    .modalContent {
+        border-radius: 1rem;
+    }
+}
+
+
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modalBody {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.modalFooter {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+@media (min-width: 640px) { /* sm breakpoint */
+    .modalFooter {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+
+/* Dark mode for modal */
+@media (prefers-color-scheme: dark) {
+    .modalContent {
+        background-color: #0f172a; /* slate-900 */
+    }
+    .modalHeader {
+        border-color: #1e293b; /* slate-800 */
+    }
+}

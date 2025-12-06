@@ -26,7 +26,17 @@ const LoginPage = () => {
 
     try {
       await loginRequest(trimmedUsername, password)
-      navigate("/dashboard")
+      const isAdmin =
+        localStorage.getItem("is_staff") === "true" ||
+        localStorage.getItem("is_superuser") === "true"
+      const isDriver = localStorage.getItem("is_driver") === "true"
+      if (isAdmin) {
+        navigate("/dashboard", { replace: true })
+      } else if (isDriver) {
+        navigate("/my-orders", { replace: true })
+      } else {
+        navigate("/dashboard", { replace: true })
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Falha ao autenticar."

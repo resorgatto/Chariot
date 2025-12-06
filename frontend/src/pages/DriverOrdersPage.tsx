@@ -18,6 +18,7 @@ import {
   Archive,
 } from "lucide-react"
 import { fetchMe, updateDeliveryOrder, MeResponse } from "@/lib/api"
+import styles from "./DriverOrdersPage.module.css"
 
 type DriverOrder = MeResponse["assigned_orders"][number]
 type TabKey = "orders" | "closed" | "garage" | "vehicle"
@@ -61,7 +62,9 @@ const DriverOrdersPage = () => {
       setError("")
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Erro ao carregar dados do motorista."
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar dados do motorista."
       setError(message)
     } finally {
       setLoading(false)
@@ -127,34 +130,32 @@ const DriverOrdersPage = () => {
         {loading ? (
           <p>Carregando...</p>
         ) : activeOrders.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Nenhuma ordem atribuida.</p>
+          <p className="text-muted-foreground text-sm">
+            Nenhuma ordem atribuida.
+          </p>
         ) : (
           activeOrders.map((order) => (
             <button
               key={order.id}
-              className="w-full flex items-start justify-between rounded-lg border bg-white/90 dark:bg-white/10 px-4 py-3 text-left shadow-sm hover:shadow-md transition-shadow"
+              className={styles.orderCard}
               onClick={() => {
                 setSelectedOrder(order)
                 setNote(noteCache[order.id] || "")
               }}
             >
-              <div className="space-y-1">
-                <p className="font-semibold text-slate-900 dark:text-white">
-                  {order.client_name}
-                </p>
-                <p className="text-sm text-muted-foreground">Status: {order.status}</p>
+              <div className={styles.orderInfo}>
+                <p className={styles.clientName}>{order.client_name}</p>
+                <p className={styles.status}>Status: {order.status}</p>
                 {order.vehicle_model && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className={styles.vehicle}>
                     Veiculo: {order.vehicle_model} ({order.vehicle_plate})
                   </p>
                 )}
                 {order.garage_name && (
-                  <p className="text-xs text-muted-foreground">Garagem: {order.garage_name}</p>
+                  <p className={styles.garage}>Garagem: {order.garage_name}</p>
                 )}
               </div>
-              <span className="rounded-full bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-white px-3 py-1 text-xs font-medium">
-                #{order.id}
-              </span>
+              <span className={styles.orderId}>#{order.id}</span>
             </button>
           ))
         )}
@@ -175,24 +176,17 @@ const DriverOrdersPage = () => {
           <p className="text-muted-foreground text-sm">Nenhuma ordem fechada.</p>
         ) : (
           closedOrders.map((order) => (
-            <div
-              key={`closed-${order.id}`}
-              className="flex items-start justify-between rounded-lg border bg-white/90 dark:bg-white/10 px-4 py-3"
-            >
-              <div className="space-y-1">
-                <p className="font-semibold text-slate-900 dark:text-white">
-                  {order.client_name}
-                </p>
-                <p className="text-sm text-muted-foreground">Status: {order.status}</p>
+            <div key={`closed-${order.id}`} className={styles.orderCard}>
+              <div className={styles.orderInfo}>
+                <p className={styles.clientName}>{order.client_name}</p>
+                <p className={styles.status}>Status: {order.status}</p>
                 {order.vehicle_model && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className={styles.vehicle}>
                     Veiculo: {order.vehicle_model} ({order.vehicle_plate})
                   </p>
                 )}
               </div>
-              <span className="rounded-full bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-white px-3 py-1 text-xs font-medium">
-                #{order.id}
-              </span>
+              <span className={styles.orderId}>#{order.id}</span>
             </div>
           ))
         )}
@@ -204,7 +198,9 @@ const DriverOrdersPage = () => {
     <Card>
       <CardHeader>
         <CardTitle>Garagem</CardTitle>
-        <CardDescription>Garagem atribuida para estacionar ao fim do expediente.</CardDescription>
+        <CardDescription>
+          Garagem atribuida para estacionar ao fim do expediente.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {loading ? (
@@ -217,18 +213,23 @@ const DriverOrdersPage = () => {
           garageAssignments.map((order) => (
             <div
               key={`garage-${order.garage ?? order.garage_name ?? order.id}`}
-              className="rounded-lg border bg-white/80 px-4 py-3"
+              className={styles.orderCard}
             >
-              <p className="font-semibold">{order.garage_name || "Garagem nao informada"}</p>
-              <p className="text-sm text-muted-foreground">
-                Relacionada a ordem #{order.id}
-                {order.client_name ? ` para ${order.client_name}` : ""}
-              </p>
-              {order.vehicle_plate && (
-                <p className="text-xs text-muted-foreground">
-                  Veiculo alocado: {order.vehicle_model || "Veiculo"} ({order.vehicle_plate})
+              <div>
+                <p className="font-semibold">
+                  {order.garage_name || "Garagem nao informada"}
                 </p>
-              )}
+                <p className="text-sm text-muted-foreground">
+                  Relacionada a ordem #{order.id}
+                  {order.client_name ? ` para ${order.client_name}` : ""}
+                </p>
+                {order.vehicle_plate && (
+                  <p className="text-xs text-muted-foreground">
+                    Veiculo alocado: {order.vehicle_model || "Veiculo"} (
+                    {order.vehicle_plate})
+                  </p>
+                )}
+              </div>
             </div>
           ))
         )}
@@ -240,7 +241,9 @@ const DriverOrdersPage = () => {
     <Card>
       <CardHeader>
         <CardTitle>Automovel</CardTitle>
-        <CardDescription>Veiculo vinculado as suas ordens ativas.</CardDescription>
+        <CardDescription>
+          Veiculo vinculado as suas ordens ativas.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {loading ? (
@@ -253,22 +256,24 @@ const DriverOrdersPage = () => {
           vehicleAssignments.map((order) => (
             <div
               key={`vehicle-${order.vehicle ?? order.vehicle_plate ?? order.id}`}
-              className="flex items-start justify-between rounded-lg border bg-white/80 px-4 py-3"
+              className={styles.orderCard}
             >
-              <div className="space-y-1">
+              <div className={styles.orderInfo}>
                 <p className="font-semibold">
                   {order.vehicle_model || "Veiculo designado"}
                 </p>
                 {order.vehicle_plate && (
-                  <p className="text-sm text-muted-foreground">Placa: {order.vehicle_plate}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Placa: {order.vehicle_plate}
+                  </p>
                 )}
                 {order.garage_name && (
-                  <p className="text-xs text-muted-foreground">Garagem de apoio: {order.garage_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Garagem de apoio: {order.garage_name}
+                  </p>
                 )}
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                Ordem #{order.id}
-              </span>
+              <span className={styles.orderId}>Ordem #{order.id}</span>
             </div>
           ))
         )}
@@ -277,17 +282,17 @@ const DriverOrdersPage = () => {
   )
 
   return (
-    <div className="space-y-6">
+    <div className={styles.page}>
       <div>
-        <h1 className="text-3xl font-bold">Area do motorista</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className={styles.headerTitle}>Area do motorista</h1>
+        <p className={styles.headerDescription}>
           Visualize suas ordens, a garagem de retorno e o veiculo designado.
         </p>
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <div className="flex flex-wrap gap-2">
+      <div className={styles.tabsContainer}>
         {tabs.map(({ id, label, icon: Icon }) => (
           <Button
             key={id}
@@ -308,11 +313,13 @@ const DriverOrdersPage = () => {
       {activeTab === "vehicle" && renderVehicleTab()}
 
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 px-3 py-4">
-          <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-2xl shadow-2xl">
-            <div className="flex items-start justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
               <div>
-                <p className="text-sm text-muted-foreground">Ordem #{selectedOrder.id}</p>
+                <p className="text-sm text-muted-foreground">
+                  Ordem #{selectedOrder.id}
+                </p>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {selectedOrder.client_name}
                 </h3>
@@ -326,7 +333,7 @@ const DriverOrdersPage = () => {
               </button>
             </div>
 
-            <div className="px-4 py-3 space-y-3">
+            <div className={styles.modalBody}>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 <span>Destino nao informado</span>
@@ -349,11 +356,13 @@ const DriverOrdersPage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className={styles.modalFooter}>
                 <Button
                   variant="secondary"
                   className="w-full gap-2"
-                  onClick={() => handleStatusChange(selectedOrder.id, "in_transit")}
+                  onClick={() =>
+                    handleStatusChange(selectedOrder.id, "in_transit")
+                  }
                   disabled={updating}
                 >
                   <CheckCircle className="h-4 w-4" />
@@ -362,7 +371,9 @@ const DriverOrdersPage = () => {
                 <Button
                   variant="default"
                   className="w-full gap-2"
-                  onClick={() => handleStatusChange(selectedOrder.id, "delivered")}
+                  onClick={() =>
+                    handleStatusChange(selectedOrder.id, "delivered")
+                  }
                   disabled={updating}
                 >
                   <CheckCircle className="h-4 w-4" />
@@ -371,7 +382,9 @@ const DriverOrdersPage = () => {
                 <Button
                   variant="destructive"
                   className="w-full gap-2"
-                  onClick={() => handleStatusChange(selectedOrder.id, "cancelled")}
+                  onClick={() =>
+                    handleStatusChange(selectedOrder.id, "cancelled")
+                  }
                   disabled={updating}
                 >
                   <XCircle className="h-4 w-4" />
