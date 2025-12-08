@@ -1,0 +1,23 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: transparent;
+}
+
+.main {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .main {
+    padding: 1.5rem;
+  }
+}

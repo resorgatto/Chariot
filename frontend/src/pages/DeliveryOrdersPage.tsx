@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { Pencil, MapPin, Clock } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
@@ -25,6 +26,20 @@ type OrderAssignForm = Record<
   { driver: string; vehicle: string; garage: string }
 >
 
+type EditOrderForm = {
+  id: number
+  client_name: string
+  status: string
+  deadline: string
+  driver: string
+  vehicle: string
+  garage: string
+  pickup_latitude: string
+  pickup_longitude: string
+  dropoff_latitude: string
+  dropoff_longitude: string
+}
+
 const DeliveryOrdersPage = () => {
   const [orders, setOrders] = useState<DeliveryOrder[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
@@ -33,7 +48,6 @@ const DeliveryOrdersPage = () => {
   const [users, setUsers] = useState<AppUser[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [assigning, setAssigning] = useState<number | null>(null)
   const [error, setError] = useState("")
   const [form, setForm] = useState({
     client_name: "",
@@ -49,8 +63,14 @@ const DeliveryOrdersPage = () => {
     vehicle: "",
     garage: "",
   })
-  const [assignForm, setAssignForm] = useState<OrderAssignForm>({})
   const [cepLoading, setCepLoading] = useState({ pickup: false, dropoff: false })
+
+  const [editingOrder, setEditingOrder] = useState<EditOrderForm | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editCepLoading, setEditCepLoading] = useState({
+    pickup: false,
+    dropoff: false,
+  })
 
   const loadData = async () => {
     setLoading(true)
@@ -63,22 +83,11 @@ const DeliveryOrdersPage = () => {
           fetchGarages(),
           fetchUsers(),
         ])
-      const orderResults = ordersData.results || []
-      setOrders(orderResults)
+      setOrders(ordersData.results || [])
       setDrivers(driversData.results || [])
       setVehicles(vehiclesData.results || [])
       setGarages(garagesData.results || [])
       setUsers(usersData.results || [])
-      setAssignForm(
-        orderResults.reduce<OrderAssignForm>((acc, order) => {
-          acc[order.id] = {
-            driver: order.driver ? String(order.driver) : "",
-            vehicle: order.vehicle ? String(order.vehicle) : "",
-            garage: "",
-          }
-          return acc
-        }, {})
-      )
       setError("")
     } catch (err) {
       const message =
@@ -107,6 +116,7 @@ const DeliveryOrdersPage = () => {
         dropoff_longitude: Number(form.dropoff_longitude),
         driver: form.driver ? Number(form.driver) : null,
         vehicle: form.vehicle ? Number(form.vehicle) : null,
+        garage: form.garage ? Number(form.garage) : null,
       }
       await createDeliveryOrder(payload)
       if (form.vehicle && form.garage) {
@@ -135,36 +145,6 @@ const DeliveryOrdersPage = () => {
       setError(message)
     } finally {
       setSaving(false)
-    }
-  }
-
-  const handleAssign = async (orderId: number) => {
-    const formValues = assignForm[orderId] || {
-      driver: "",
-      vehicle: "",
-      garage: "",
-    }
-    const driverId = formValues.driver ? Number(formValues.driver) : null
-    const vehicleId = formValues.vehicle ? Number(formValues.vehicle) : null
-    const garageId = formValues.garage ? Number(formValues.garage) : null
-
-    setAssigning(orderId)
-    try {
-      await updateDeliveryOrder(orderId, {
-        driver: driverId,
-        vehicle: vehicleId,
-      })
-      if (vehicleId && garageId) {
-        await updateVehicle(vehicleId, { garage: garageId })
-      }
-      setError("")
-      await loadData()
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Falha ao atualizar ordem."
-      setError(message)
-    } finally {
-      setAssigning(null)
     }
   }
 
@@ -205,13 +185,115 @@ const DeliveryOrdersPage = () => {
     }
   }
 
-  const getDriverLabel = (driverId: number | null | undefined) => {
-    if (!driverId) return "Sem motorista"
-    const driver = drivers.find((d) => d.id === driverId)
-    if (!driver) return `Motorista ${driverId}`
-    const user = users.find((u) => u.id === driver.user)
-    return user?.username || `Motorista ${driverId}`
+  const handleEditCepLookup = async (
+    kind: "pickup" | "dropoff",
+    latField: keyof EditOrderForm,
+    lonField: keyof EditOrderForm
+  ) => {
+    if (!editingOrder) return
+    const cepValue = kind === "pickup" ? editingOrder.pickup_latitude : editingOrder.dropoff_latitude
+    const cleanCep = cepValue.replace(/\D/g, "")
+    if (!cleanCep) {
+      setError("Informe um CEP.")
+      return
+    }
+    setEditCepLoading((prev) => ({ ...prev, [kind]: true }))
+    try {
+      const data = await lookupCep(cleanCep)
+      const lat = data.latitude ? String(data.latitude) : editingOrder[latField]
+      const lon = data.longitude ? String(data.longitude) : editingOrder[lonField]
+      setEditingOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              [latField]: lat,
+              [lonField]: lon,
+            }
+          : prev
+      )
+      setError("")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha ao buscar CEP."
+      setError(message)
+    } finally {
+      setEditCepLoading((prev) => ({ ...prev, [kind]: false }))
+    }
   }
+
+  const openEdit = (order: DeliveryOrder) => {
+    setEditingOrder({
+      id: order.id,
+      client_name: order.client_name || "",
+      status: order.status || "pending",
+      deadline: order.deadline
+        ? (() => {
+            const d = new Date(order.deadline)
+            const tz = d.getTime() - d.getTimezoneOffset() * 60000
+            return new Date(tz).toISOString().slice(0, 16)
+          })()
+        : "",
+      driver: order.driver ? String(order.driver) : "",
+      vehicle: order.vehicle ? String(order.vehicle) : "",
+      garage: order.garage ? String(order.garage) : "",
+      pickup_latitude: order.pickup_location?.coordinates?.[1]
+        ? String(order.pickup_location.coordinates[1])
+        : "",
+      pickup_longitude: order.pickup_location?.coordinates?.[0]
+        ? String(order.pickup_location.coordinates[0])
+        : "",
+      dropoff_latitude: order.dropoff_location?.coordinates?.[1]
+        ? String(order.dropoff_location.coordinates[1])
+        : "",
+      dropoff_longitude: order.dropoff_location?.coordinates?.[0]
+        ? String(order.dropoff_location.coordinates[0])
+        : "",
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingOrder) return
+    setEditSaving(true)
+    try {
+      const payload = {
+        client_name: editingOrder.client_name.trim(),
+        status: editingOrder.status,
+        deadline: editingOrder.deadline
+          ? new Date(editingOrder.deadline).toISOString()
+          : undefined,
+        driver: editingOrder.driver ? Number(editingOrder.driver) : null,
+        vehicle: editingOrder.vehicle ? Number(editingOrder.vehicle) : null,
+        garage: editingOrder.garage ? Number(editingOrder.garage) : null,
+      } as any
+
+      await updateDeliveryOrder(editingOrder.id, payload)
+      if (editingOrder.vehicle && editingOrder.garage) {
+        await updateVehicle(Number(editingOrder.vehicle), {
+          garage: Number(editingOrder.garage),
+        })
+      }
+      setEditingOrder(null)
+      setError("")
+      await loadData()
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha ao salvar ordem."
+      setError(message)
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const getDriverLabel = useMemo(
+    () => (driverId: number | null | undefined) => {
+      if (!driverId) return "Sem motorista"
+      const driver = drivers.find((d) => d.id === driverId)
+      if (!driver) return `Motorista ${driverId}`
+      const user = users.find((u) => u.id === driver.user)
+      return user?.username || `Motorista ${driverId}`
+    },
+    [drivers, users]
+  )
 
   return (
     <div className="space-y-6">
@@ -219,7 +301,7 @@ const DeliveryOrdersPage = () => {
         <div>
           <h1 className="text-3xl font-bold">Ordens de Entrega</h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre coletas, escolha motorista/veiculo/garagem e edite atribuicoes na lista.
+            Cadastre coletas e edite as ordens cadastradas.
           </p>
         </div>
       </div>
@@ -435,145 +517,256 @@ const DeliveryOrdersPage = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ordens cadastradas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {loading ? (
-            <p>Carregando...</p>
-          ) : orders.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Nenhuma ordem cadastrada.
-            </p>
-          ) : (
-            orders.map((order) => (
-              <div
-                key={order.id}
-                className="space-y-3 rounded-lg border bg-white/70 px-4 py-3"
-              >
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))] justify-items-stretch">
+        {loading ? (
+          <p>Carregando...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Nenhuma ordem cadastrada.
+          </p>
+        ) : (
+          orders.map((order) => (
+            <Card key={order.id} className="flex flex-col h-full shadow-sm">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">{order.client_name}</p>
+                    <CardTitle className="text-lg">{order.client_name}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Status: {order.status}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Prazo: {order.deadline}
+                      #{order.id} • {order.status}
                     </p>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    #{order.id}
-                  </span>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Motorista</Label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={assignForm[order.id]?.driver || ""}
-                      onChange={(e) =>
-                        setAssignForm((prev) => ({
-                          ...prev,
-                          [order.id]: {
-                            ...(prev[order.id] || {
-                              driver: "",
-                              vehicle: "",
-                              garage: "",
-                            }),
-                            driver: e.target.value,
-                          },
-                        }))
-                      }
-                    >
-                      <option value="">Selecione</option>
-                      {drivers.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {users.find((u) => u.id === d.user)?.username ||
-                            `Motorista ${d.id}`}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-muted-foreground">
-                      Atual: {order.driver_name || getDriverLabel(order.driver)}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs">Veiculo</Label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={assignForm[order.id]?.vehicle || ""}
-                      onChange={(e) =>
-                        setAssignForm((prev) => ({
-                          ...prev,
-                          [order.id]: {
-                            ...(prev[order.id] || {
-                              driver: "",
-                              vehicle: "",
-                              garage: "",
-                            }),
-                            vehicle: e.target.value,
-                          },
-                        }))
-                      }
-                    >
-                      <option value="">Selecione</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.model} ({v.plate})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-muted-foreground">
-                      Atual: {order.vehicle_plate || "n/d"}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs">Garagem (opcional)</Label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      value={assignForm[order.id]?.garage || ""}
-                      onChange={(e) =>
-                        setAssignForm((prev) => ({
-                          ...prev,
-                          [order.id]: {
-                            ...(prev[order.id] || {
-                              driver: "",
-                              vehicle: "",
-                              garage: "",
-                            }),
-                            garage: e.target.value,
-                          },
-                        }))
-                      }
-                    >
-                      <option value="">Selecione</option>
-                      {garages.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
                   <Button
-                    size="sm"
-                    onClick={() => handleAssign(order.id)}
-                    disabled={assigning === order.id}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEdit(order)}
+                    aria-label="Editar ordem"
                   >
-                    {assigning === order.id ? "Salvando..." : "Salvar atribuicao"}
+                    <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm flex-1 flex flex-col">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    Prazo:{" "}
+                    {order.deadline
+                      ? new Date(order.deadline).toLocaleString("pt-BR")
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    Origem:{" "}
+                    {order.pickup_location?.coordinates
+                      ? `${order.pickup_location.coordinates[1]?.toFixed(4)}, ${order.pickup_location.coordinates[0]?.toFixed(4)}`
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    Destino:{" "}
+                    {order.dropoff_location?.coordinates
+                      ? `${order.dropoff_location.coordinates[1]?.toFixed(4)}, ${order.dropoff_location.coordinates[0]?.toFixed(4)}`
+                      : "—"}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  Motorista: {getDriverLabel(order.driver)}
+                </p>
+                <p className="text-muted-foreground">
+                  Veículo: {order.vehicle_plate || "n/d"}
+                </p>
+                <div className="mt-auto text-xs text-muted-foreground">
+                  Criada em:{" "}
+                  {order.created_at
+                    ? new Date(order.created_at).toLocaleString("pt-BR")
+                    : "—"}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {editingOrder && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg w-full max-w-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Editar ordem #{editingOrder.id}</h2>
+                <p className="text-sm text-muted-foreground">
+                  Atualize os dados e salve.
+                </p>
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              <Button
+                variant="ghost"
+                onClick={() => setEditingOrder(null)}
+                aria-label="Fechar"
+              >
+                Fechar
+              </Button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Cliente</Label>
+                <Input
+                  value={editingOrder.client_name}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, client_name: e.target.value } : prev
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={editingOrder.status}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, status: e.target.value } : prev
+                    )
+                  }
+                >
+                  <option value="pending">Pendente</option>
+                  <option value="in_transit">Em rota</option>
+                  <option value="delivered">Entregue</option>
+                  <option value="cancelled">Cancelada</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Prazo</Label>
+                <Input
+                  type="datetime-local"
+                  value={editingOrder.deadline}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, deadline: e.target.value } : prev
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Motorista</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={editingOrder.driver}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, driver: e.target.value } : prev
+                    )
+                  }
+                >
+                  <option value="">Selecione</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {users.find((u) => u.id === d.user)?.username || `Motorista ${d.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Veículo</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={editingOrder.vehicle}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, vehicle: e.target.value } : prev
+                    )
+                  }
+                >
+                  <option value="">Selecione</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.model} ({v.plate})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Garagem (opcional)</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={editingOrder.garage}
+                  onChange={(e) =>
+                    setEditingOrder((prev) =>
+                      prev ? { ...prev, garage: e.target.value } : prev
+                    )
+                  }
+                >
+                  <option value="">Selecione</option>
+                  {garages.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Origem (lat/lon)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Lat"
+                    value={editingOrder.pickup_latitude}
+                    onChange={(e) =>
+                      setEditingOrder((prev) =>
+                        prev ? { ...prev, pickup_latitude: e.target.value } : prev
+                      )
+                    }
+                  />
+                  <Input
+                    placeholder="Lon"
+                    value={editingOrder.pickup_longitude}
+                    onChange={(e) =>
+                      setEditingOrder((prev) =>
+                        prev ? { ...prev, pickup_longitude: e.target.value } : prev
+                      )
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Destino (lat/lon)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Lat"
+                    value={editingOrder.dropoff_latitude}
+                    onChange={(e) =>
+                      setEditingOrder((prev) =>
+                        prev ? { ...prev, dropoff_latitude: e.target.value } : prev
+                      )
+                    }
+                  />
+                  <Input
+                    placeholder="Lon"
+                    value={editingOrder.dropoff_longitude}
+                    onChange={(e) =>
+                      setEditingOrder((prev) =>
+                        prev ? { ...prev, dropoff_longitude: e.target.value } : prev
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="secondary" onClick={() => setEditingOrder(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={editSaving}>
+                {editSaving ? "Salvando..." : "Salvar alterações"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

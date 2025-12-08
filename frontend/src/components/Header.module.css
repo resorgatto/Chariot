@@ -1,0 +1,85 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: transparent;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground, 24 35% 12%));
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.iconButton {
+  padding: 0.5rem;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: hsl(var(--foreground, 24 35% 12%));
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.iconButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: hsl(var(--foreground, 24 35% 12%));
+}
+
+.username {
+  display: none;
+}
+
+.menuButton {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: transparent;
+  color: hsl(var(--foreground, 24 35% 12%));
+}
+
+@media (min-width: 640px) {
+  .username {
+    display: inline;
+  }
+}
+
+@media (min-width: 768px) {
+  .menuButton {
+    display: none;
+  }
+}
+
+:global(.dark) .title,
+:global(.dark) .iconButton,
+:global(.dark) .user,
+:global(.dark) .menuButton {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:global(.dark) .iconButton:hover,
+:global(.dark) .menuButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}

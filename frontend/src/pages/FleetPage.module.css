@@ -1,0 +1,137 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--muted-foreground, #64748b);
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
+  justify-content: flex-start;
+}
+
+.vehicleCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.vehicleImage {
+  position: relative;
+  width: 100%;
+  height: 8rem;
+  background: var(--muted, #e2e8f0);
+  padding: 0.5rem;
+}
+
+.vehicleImage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.5rem;
+}
+
+.vehiclePlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground, #64748b);
+  font-size: 0.85rem;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.cardHeader {
+  padding: 0.75rem 1rem 0.25rem 1rem;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.5rem 1rem 1rem 1rem;
+}
+
+.cardFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.inlineSelect {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--input, #cbd5e1);
+  background: var(--background, #fff);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.inputsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.cepRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fullWidthButton {
+  width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .title,
+  .subtitle {
+    color: #fff;
+  }
+
+  .vehiclePlaceholder {
+    color: #cbd5e1;
+  }
+
+  .section {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+}

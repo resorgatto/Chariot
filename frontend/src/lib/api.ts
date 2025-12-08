@@ -349,6 +349,7 @@ export const createDeliveryOrder = (payload: {
   dropoff_longitude: number;
   driver?: number | null;
   vehicle?: number | null;
+  garage?: number | null;
 }) =>
   apiFetch<DeliveryOrder>("/api/delivery-orders/", {
     method: "POST",
@@ -358,6 +359,7 @@ export const createDeliveryOrder = (payload: {
       deadline: payload.deadline,
       driver: payload.driver ?? null,
       vehicle: payload.vehicle ?? null,
+      garage: payload.garage ?? null,
       pickup_location: {
         type: "Point",
         coordinates: [payload.pickup_longitude, payload.pickup_latitude],
@@ -376,11 +378,18 @@ export const updateDeliveryOrder = (
     driver: number | null;
     vehicle: number | null;
     deadline: string;
+    client_name: string;
+    garage: number | null;
   }>
 ) =>
   apiFetch<DeliveryOrder>(`/api/delivery-orders/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(payload),
+  });
+
+export const deleteDeliveryOrder = (id: number) =>
+  apiFetch<void>(`/api/delivery-orders/${id}/`, {
+    method: "DELETE",
   });
 
 // Coverage check

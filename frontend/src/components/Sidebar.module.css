@@ -1,0 +1,159 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.6);
+  transition: opacity 0.3s ease;
+}
+
+.overlayHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, width 0.3s ease;
+  transform: translateX(-100%);
+  width: 16rem;
+}
+
+.sidebarOpen {
+  transform: translateX(0);
+}
+
+.sidebarCollapsed {
+  width: 5rem;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    position: static;
+    transform: none;
+    width: 16rem;
+  }
+
+  .sidebarCollapsed {
+    width: 5rem;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logoText {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: hsl(var(--foreground, 24 35% 12%));
+}
+
+.toggleButton {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  color: hsl(var(--foreground, 24 35% 12%));
+  background: transparent;
+  transition: background 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.toggleButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nav {
+  flex: 1;
+  padding: 0.5rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: hsl(var(--foreground, 24 35% 12%));
+  text-decoration: none;
+  transition: background 0.2s ease, border-left 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.navLink:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.navLinkActive {
+  background: rgba(0, 0, 0, 0.05);
+  border-left-color: hsl(var(--foreground, 24 35% 12%));
+}
+
+.navText {
+  margin-left: 0.75rem;
+}
+
+.logout {
+  padding: 1rem;
+}
+
+.logoutButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: hsl(var(--foreground, 24 35% 12%));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.logoutButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.navIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+:global(.dark) .logoText,
+:global(.dark) .toggleButton,
+:global(.dark) .navLink,
+:global(.dark) .logoutButton {
+  color: #fff;
+}
+
+:global(.dark) .navLink:hover,
+:global(.dark) .navLinkActive,
+:global(.dark) .logoutButton:hover,
+:global(.dark) .toggleButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:global(.dark) .navLinkActive {
+  border-left-color: #fff;
+}

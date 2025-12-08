@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
+import styles from "./FleetPage.module.css"
 import {
   createVehicle,
   fetchGarages,
@@ -43,6 +44,7 @@ const FleetPage = () => {
     useState<Record<number, boolean>>({})
   const [garageForm, setGarageForm] = useState<Record<number, string>>({})
   const [garageSaving, setGarageSaving] = useState<number | null>(null)
+  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
 
   const loadData = async () => {
     setLoading(true)
@@ -186,11 +188,11 @@ const FleetPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className={styles.page}>
+      <div className={styles.titleRow}>
         <div>
-          <h1 className="text-3xl font-bold">Gestao de Frota</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className={styles.title}>Gestao de Frota</h1>
+          <p className={styles.subtitle}>
             Cadastre um veiculo e associe a uma garagem.
           </p>
         </div>
@@ -202,187 +204,230 @@ const FleetPage = () => {
       {loading ? (
         <p>Carregando dados...</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={styles.grid}>
           {vehicles.length === 0 && (
             <p className="text-muted-foreground">Nenhum veiculo cadastrado.</p>
           )}
           {vehicles.map((vehicle) => (
-            <Card key={vehicle.id}>
-              {vehicle.image && (
-                <img
-                  src={vehicle.image}
-                  alt={vehicle.model}
-                  className="rounded-t-lg h-48 w-full object-cover"
-                />
-              )}
-              <CardHeader>
-                <CardTitle>{vehicle.model}</CardTitle>
+            <Card
+              key={vehicle.id}
+              className={styles.vehicleCard}
+            >
+              <div className={styles.vehicleImage}>
+                {vehicle.image ? (
+                  <img
+                    src={vehicle.image}
+                    alt={vehicle.model}
+                  />
+                ) : (
+                  <div className={styles.vehiclePlaceholder}>
+                    Sem imagem
+                  </div>
+                )}
+              </div>
+              <CardHeader className={styles.cardHeader}>
+                <CardTitle className={styles.cardTitle}>{vehicle.model}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-muted-foreground">Placa: {vehicle.plate}</p>
-                <p className="text-muted-foreground">
+              <CardContent className={styles.cardContent}>
+                <p className="text-muted-foreground text-sm">
+                  Placa: {vehicle.plate}
+                </p>
+                <p className="text-muted-foreground text-sm">
                   Capacidade: {vehicle.capacity_kg} kg
                 </p>
                 <Badge variant="secondary" className="capitalize">
                   {vehicle.type}
                 </Badge>
                 {vehicle.garage && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Garagem:{" "}
                     {garages.find((g) => g.id === vehicle.garage)?.name ||
                       vehicle.garage}
                   </p>
                 )}
-                <div className="space-y-2">
-                  <Label className="text-xs">Trocar garagem</Label>
-                  <select
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    value={garageForm[vehicle.id] ?? ""}
-                    onChange={(e) =>
-                      setGarageForm((prev) => ({
+                <div className={styles.cardFooter}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setExpandedCards((prev) => ({
                         ...prev,
-                        [vehicle.id]: e.target.value,
+                        [vehicle.id]: !prev[vehicle.id],
                       }))
                     }
+                    className={styles.fullWidthButton}
                   >
-                    <option value="">Selecione</option>
-                    {garages.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleUpdateGarage(vehicle)}
-                    disabled={garageSaving === vehicle.id}
-                  >
-                    {garageSaving === vehicle.id ? "Salvando..." : "Atualizar garagem"}
+                    {expandedCards[vehicle.id] ? "Fechar ações" : "Gerenciar"}
                   </Button>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Status e posicao</p>
-                  <select
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    value={
-                      statusForm[vehicle.id]?.status || vehicle.status || "available"
-                    }
-                    onChange={(e) =>
-                      setStatusForm((prev) => ({
-                        ...prev,
-                        [vehicle.id]: {
-                          status: e.target.value,
-                          lat:
-                            prev[vehicle.id]?.lat ??
-                            (vehicle.last_latitude ? String(vehicle.last_latitude) : ""),
-                          lon:
-                            prev[vehicle.id]?.lon ??
-                            (vehicle.last_longitude
-                              ? String(vehicle.last_longitude)
-                              : ""),
-                        },
-                      }))
-                    }
-                  >
-                    <option value="available">Disponivel</option>
-                    <option value="in_transit">Em transito</option>
-                    <option value="maintenance">Manutencao</option>
-                  </select>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Lat"
-                      value={
-                        statusForm[vehicle.id]?.lat ??
-                        (vehicle.last_latitude ? String(vehicle.last_latitude) : "")
-                      }
-                      onChange={(e) =>
-                        setStatusForm((prev) => ({
-                          ...prev,
-                          [vehicle.id]: {
-                            status:
-                              prev[vehicle.id]?.status ||
-                              vehicle.status ||
-                              "available",
-                            lat: e.target.value,
-                            lon:
-                              prev[vehicle.id]?.lon ??
-                              (vehicle.last_longitude
-                                ? String(vehicle.last_longitude)
-                                : ""),
-                          },
-                        }))
-                      }
-                    />
-                    <Input
-                      placeholder="Lon"
-                      value={
-                        statusForm[vehicle.id]?.lon ??
-                        (vehicle.last_longitude ? String(vehicle.last_longitude) : "")
-                      }
-                      onChange={(e) =>
-                        setStatusForm((prev) => ({
-                          ...prev,
-                          [vehicle.id]: {
-                            status:
-                              prev[vehicle.id]?.status ||
-                              vehicle.status ||
-                              "available",
-                            lat:
-                              prev[vehicle.id]?.lat ??
+                  {expandedCards[vehicle.id] && (
+                    <div className={styles.section}>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Trocar garagem</Label>
+                        <select
+                          className={styles.inlineSelect}
+                          value={garageForm[vehicle.id] ?? ""}
+                          onChange={(e) =>
+                            setGarageForm((prev) => ({
+                              ...prev,
+                              [vehicle.id]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Selecione</option>
+                          {garages.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleUpdateGarage(vehicle)}
+                          disabled={garageSaving === vehicle.id}
+                          className={styles.fullWidthButton}
+                        >
+                          {garageSaving === vehicle.id
+                            ? "Salvando..."
+                            : "Atualizar garagem"}
+                        </Button>
+                      </div>
+                      <div className={styles.section}>
+                        <p className="text-xs text-muted-foreground">
+                          Status e posicao
+                        </p>
+                        <select
+                          className={styles.inlineSelect}
+                          value={
+                            statusForm[vehicle.id]?.status ||
+                            vehicle.status ||
+                            "available"
+                          }
+                          onChange={(e) =>
+                            setStatusForm((prev) => ({
+                              ...prev,
+                              [vehicle.id]: {
+                                status: e.target.value,
+                                lat:
+                                  prev[vehicle.id]?.lat ??
+                                  (vehicle.last_latitude
+                                    ? String(vehicle.last_latitude)
+                                    : ""),
+                                lon:
+                                  prev[vehicle.id]?.lon ??
+                                  (vehicle.last_longitude
+                                    ? String(vehicle.last_longitude)
+                                    : ""),
+                              },
+                            }))
+                          }
+                        >
+                          <option value="available">Disponivel</option>
+                          <option value="in_transit">Em transito</option>
+                          <option value="maintenance">Manutencao</option>
+                        </select>
+                        <div className={styles.inputsGrid}>
+                          <Input
+                            placeholder="Lat"
+                            value={
+                              statusForm[vehicle.id]?.lat ??
                               (vehicle.last_latitude
                                 ? String(vehicle.last_latitude)
-                                : ""),
-                            lon: e.target.value,
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="CEP"
-                      value={statusForm[vehicle.id]?.cep ?? ""}
-                      onChange={(e) =>
-                        setStatusForm((prev) => ({
-                          ...prev,
-                          [vehicle.id]: {
-                            status:
-                              prev[vehicle.id]?.status ||
-                              vehicle.status ||
-                              "available",
-                            lat:
-                              prev[vehicle.id]?.lat ??
-                              (vehicle.last_latitude
-                                ? String(vehicle.last_latitude)
-                                : ""),
-                            lon:
-                              prev[vehicle.id]?.lon ??
+                                : "")
+                            }
+                            onChange={(e) =>
+                              setStatusForm((prev) => ({
+                                ...prev,
+                                [vehicle.id]: {
+                                  status:
+                                    prev[vehicle.id]?.status ||
+                                    vehicle.status ||
+                                    "available",
+                                  lat: e.target.value,
+                                  lon:
+                                    prev[vehicle.id]?.lon ??
+                                    (vehicle.last_longitude
+                                      ? String(vehicle.last_longitude)
+                                      : ""),
+                                },
+                              }))
+                            }
+                          />
+                          <Input
+                            placeholder="Lon"
+                            value={
+                              statusForm[vehicle.id]?.lon ??
                               (vehicle.last_longitude
                                 ? String(vehicle.last_longitude)
-                                : ""),
-                            cep: e.target.value,
-                          },
-                        }))
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={statusCepLoading[vehicle.id]}
-                      onClick={() => handleStatusCepLookup(vehicle)}
-                    >
-                      {statusCepLoading[vehicle.id] ? "CEP..." : "Buscar CEP"}
-                    </Button>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleUpdateStatus(vehicle)}
-                  >
-                    Atualizar status/posicao
-                  </Button>
+                                : "")
+                            }
+                            onChange={(e) =>
+                              setStatusForm((prev) => ({
+                                ...prev,
+                                [vehicle.id]: {
+                                  status:
+                                    prev[vehicle.id]?.status ||
+                                    vehicle.status ||
+                                    "available",
+                                  lat:
+                                    prev[vehicle.id]?.lat ??
+                                    (vehicle.last_latitude
+                                      ? String(vehicle.last_latitude)
+                                      : ""),
+                                  lon: e.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className={styles.cepRow}>
+                          <Input
+                            placeholder="CEP"
+                            value={statusForm[vehicle.id]?.cep ?? ""}
+                            onChange={(e) =>
+                              setStatusForm((prev) => ({
+                                ...prev,
+                                [vehicle.id]: {
+                                  status:
+                                    prev[vehicle.id]?.status ||
+                                    vehicle.status ||
+                                    "available",
+                                  lat:
+                                    prev[vehicle.id]?.lat ??
+                                    (vehicle.last_latitude
+                                      ? String(vehicle.last_latitude)
+                                      : ""),
+                                  lon:
+                                    prev[vehicle.id]?.lon ??
+                                    (vehicle.last_longitude
+                                      ? String(vehicle.last_longitude)
+                                      : ""),
+                                  cep: e.target.value,
+                                },
+                              }))
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={statusCepLoading[vehicle.id]}
+                            onClick={() => handleStatusCepLookup(vehicle)}
+                          >
+                            {statusCepLoading[vehicle.id] ? "CEP..." : "Buscar CEP"}
+                          </Button>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleUpdateStatus(vehicle)}
+                          className={styles.fullWidthButton}
+                        >
+                          Atualizar status/posicao
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
