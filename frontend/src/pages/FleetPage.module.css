@@ -41,18 +41,21 @@
 .vehicleImage {
   position: relative;
   width: 100%;
-  height: 8rem;
+  height: 12rem;
   background: var(--muted, #e2e8f0);
-  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .vehicleImage img {
-  position: absolute;
-  inset: 0;
+  position: static;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 0.5rem;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .vehiclePlaceholder {

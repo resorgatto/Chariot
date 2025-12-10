@@ -4,7 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { Badge } from "@/components/ui/Badge"
-import { createGarage, fetchGarages, Garage, lookupCep } from "@/lib/api"
+import {
+  createGarage,
+  fetchGarages,
+  updateGarage,
+  deleteGarage,
+  Garage,
+  lookupCep,
+} from "@/lib/api"
 
 const GaragesPage = () => {
   const [garages, setGarages] = useState<Garage[]>([])
@@ -12,6 +19,18 @@ const GaragesPage = () => {
   const [error, setError] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [updating, setUpdating] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [editingGarage, setEditingGarage] = useState<Garage | null>(null)
+  const [editForm, setEditForm] = useState({
+    name: "",
+    address: "",
+    postal_code: "",
+    street_number: "",
+    capacity: "",
+    latitude: "",
+    longitude: "",
+  })
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -77,6 +96,68 @@ const GaragesPage = () => {
     }
   }
 
+  const openEdit = (garage: Garage) => {
+    setEditingGarage(garage)
+    setEditForm({
+      name: garage.name || "",
+      address: garage.address || "",
+      postal_code: garage.postal_code || "",
+      street_number: garage.street_number || "",
+      capacity: garage.capacity ? String(garage.capacity) : "",
+      latitude:
+        garage.latitude === null || garage.latitude === undefined
+          ? ""
+          : String(garage.latitude),
+      longitude:
+        garage.longitude === null || garage.longitude === undefined
+          ? ""
+          : String(garage.longitude),
+    })
+  }
+
+  const handleUpdate = async () => {
+    if (!editingGarage) return
+    setUpdating(true)
+    try {
+      const payload = {
+        name: editForm.name.trim(),
+        address: editForm.address.trim(),
+        postal_code: editForm.postal_code.trim(),
+        street_number: editForm.street_number.trim(),
+        capacity: Number(editForm.capacity) || 0,
+        latitude: editForm.latitude ? Number(editForm.latitude) : null,
+        longitude: editForm.longitude ? Number(editForm.longitude) : null,
+      }
+      const updated = await updateGarage(editingGarage.id, payload)
+      setGarages((prev) => prev.map((g) => (g.id === updated.id ? updated : g)))
+      setEditingGarage(null)
+      setError("")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao atualizar garagem."
+      setError(message)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleDelete = async (garageId: number) => {
+    const confirmed = window.confirm("Excluir esta garagem?")
+    if (!confirmed) return
+    setDeletingId(garageId)
+    try {
+      await deleteGarage(garageId)
+      setGarages((prev) => prev.filter((g) => g.id !== garageId))
+      setError("")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao excluir garagem."
+      setError(message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const handleCepLookup = async () => {
     const cep = form.postal_code.replace(/\D/g, "")
     if (!cep) {
@@ -130,7 +211,26 @@ const GaragesPage = () => {
           {garages.map((garage) => (
             <Card key={garage.id}>
               <CardHeader>
-                <CardTitle>{garage.name}</CardTitle>
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle>{garage.name}</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEdit(garage)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(garage.id)}
+                      disabled={deletingId === garage.id}
+                    >
+                      {deletingId === garage.id ? "Excluindo..." : "Excluir"}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-muted-foreground">
@@ -278,6 +378,141 @@ const GaragesPage = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {editingGarage && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg w-full max-w-md p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Garagem #{editingGarage.id}
+                </p>
+                <h2 className="text-lg font-semibold">{editingGarage.name}</h2>
+              </div>
+              <button
+                className="text-sm text-muted-foreground"
+                onClick={() => setEditingGarage(null)}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Endereco</Label>
+                <Input
+                  id="edit-address"
+                  value={editForm.address}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, address: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-postal">CEP</Label>
+                  <Input
+                    id="edit-postal"
+                    value={editForm.postal_code}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        postal_code: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-number">Numero</Label>
+                  <Input
+                    id="edit-number"
+                    value={editForm.street_number}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        street_number: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-capacity">Capacidade (vagas)</Label>
+                <Input
+                  id="edit-capacity"
+                  type="number"
+                  value={editForm.capacity}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      capacity: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lat">Latitude</Label>
+                  <Input
+                    id="edit-lat"
+                    type="number"
+                    step="any"
+                    value={editForm.latitude}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        latitude: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lng">Longitude</Label>
+                  <Input
+                    id="edit-lng"
+                    type="number"
+                    step="any"
+                    value={editForm.longitude}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        longitude: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditingGarage(null)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleUpdate} disabled={updating}>
+                {updating ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </div>
         </div>
       )}

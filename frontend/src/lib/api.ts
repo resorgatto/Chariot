@@ -242,6 +242,20 @@ export const createGarage = (payload: Partial<Garage>) =>
     body: JSON.stringify(payload),
   });
 
+export const updateGarage = (
+  id: number,
+  payload: Partial<Garage> & { capacity?: number }
+) =>
+  apiFetch<Garage>(`/api/garages/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteGarage = (id: number) =>
+  apiFetch<void>(`/api/garages/${id}/`, {
+    method: "DELETE",
+  });
+
 export type CepLookupResponse = {
   cep: string;
   street: string;
@@ -297,6 +311,26 @@ export const createUser = (payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+
+export const updateUser = (
+  id: number,
+  payload: Partial<{
+    username: string;
+    password: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    role?: string;
+    is_active?: boolean;
+  }>
+) =>
+  apiFetch<AppUser>(`/api/users/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteUser = (id: number) =>
+  apiFetch<void>(`/api/users/${id}/`, { method: "DELETE" });
 
 export type MeResponse = {
   id: number;
