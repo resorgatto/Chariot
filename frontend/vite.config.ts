@@ -8,12 +8,16 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectRegister: false,
       registerType: "autoUpdate",
       includeAssets: ["logo1.png", "logo2.png", "placeholder.svg"],
       manifest: {
-        name: "Chariot - Gestão de Rotas",
+        name: "Chariot - Gestǜo de Rotas",
         short_name: "Chariot",
-        description: "Aplicativo de Gestão de Rotas para Motoristas",
+        description: "Aplicativo de Gestǜo de Rotas para Motoristas",
         start_url: "/",
         scope: "/",
         display: "standalone",

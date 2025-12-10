@@ -1,8 +1,9 @@
-import { Bell, User, Sun, Moon, Home, Map as MapIcon, Truck, Building2, Users, ClipboardList, LocateFixed, Menu } from 'lucide-react';
+import { User, Sun, Moon, Home, Map as MapIcon, Truck, Building2, Users, ClipboardList, LocateFixed, Menu } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { Button } from './ui/Button';
 import { useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
+import NotificationBell from './NotificationBell';
 
 type HeaderProps = {
   onToggleSidebar?: () => void;
@@ -67,9 +68,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-slate-900 dark:text-white" />
           <span className="sr-only">Toggle theme</span>
         </Button>
-        <button className={styles.iconButton} aria-label="Notificações">
-          <Bell className="w-6 h-6" />
-        </button>
+        <NotificationBell />
         <div className={styles.user}>
           <User className="w-6 h-6" />
           <span className={styles.username}>Renato</span>

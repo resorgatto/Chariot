@@ -15,6 +15,7 @@ from .models import (
     DriverStatus,
     Driver,
     Garage,
+    Notification,
     Route,
     Vehicle,
     VehicleType,
@@ -84,6 +85,25 @@ class LogisticsModelTests(APITestCase):
             order.status = DeliveryStatus.IN_TRANSIT
             order.save()
             mocked_delay.assert_called_once_with(order.id)
+
+    def test_assignment_creates_notification(self):
+        pickup = Point(-46.57421, -23.55052, srid=4326)
+        dropoff = Point(-46.57421, -23.54052, srid=4326)
+        driver = Driver.objects.create(
+            user=self.driver_user,
+            license_number="CNH999999",
+        )
+
+        DeliveryOrder.objects.create(
+            client_name="Cliente Y",
+            pickup_location=pickup,
+            dropoff_location=dropoff,
+            status=DeliveryStatus.PENDING,
+            deadline=timezone.now() + timedelta(days=1),
+            driver=driver,
+        )
+
+        self.assertEqual(Notification.objects.filter(user=self.driver_user).count(), 1)
 
 
 class LogisticsAPITests(APITestCase):

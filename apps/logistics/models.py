@@ -220,3 +220,60 @@ class Route(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        verbose_name="Usuario",
+    )
+    title = models.CharField("Titulo", max_length=200)
+    body = models.TextField("Mensagem", blank=True)
+    order = models.ForeignKey(
+        DeliveryOrder,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+        verbose_name="Ordem de Entrega",
+    )
+    is_read = models.BooleanField("Lida", default=False)
+    created_at = models.DateTimeField("Criada em", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Notificacao"
+        verbose_name_plural = "Notificacoes"
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def target_url(self) -> str:
+        if self.order_id:
+            return f"/my-orders?order={self.order_id}"
+        return "/"
+
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+        verbose_name="Usuario",
+    )
+    endpoint = models.URLField("Endpoint", unique=True)
+    p256dh = models.CharField("Chave p256dh", max_length=255)
+    auth = models.CharField("Chave auth", max_length=255)
+    user_agent = models.CharField("User Agent", max_length=255, blank=True, default="")
+    created_at = models.DateTimeField("Criado em", auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "endpoint")
+        verbose_name = "Inscricao Push"
+        verbose_name_plural = "Inscricoes Push"
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.endpoint[:30]}..."

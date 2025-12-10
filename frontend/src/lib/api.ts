@@ -167,6 +167,16 @@ export type DashboardSummary = {
 export const fetchDashboardSummary = () =>
   apiFetch<DashboardSummary>("/api/dashboard-summary/");
 
+export type UserNotification = {
+  id: number;
+  title: string;
+  body?: string;
+  is_read: boolean;
+  created_at: string;
+  order_id?: number | null;
+  target_url?: string | null;
+};
+
 export type CoverageArea = {
   id: number;
   name: string;
@@ -352,6 +362,38 @@ export type MeResponse = {
 };
 
 export const fetchMe = () => apiFetch<MeResponse>("/api/me/");
+
+export const fetchNotifications = () =>
+  apiFetch<UserNotification[]>("/api/notifications/");
+
+export const markNotificationRead = (id: number) =>
+  apiFetch<UserNotification>(`/api/notifications/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_read: true }),
+  });
+
+export const markAllNotificationsRead = () =>
+  apiFetch<{ updated: number }>("/api/notifications/mark-all-read/", {
+    method: "POST",
+  });
+
+export const getPushPublicKey = () =>
+  apiFetch<{ public_key: string }>("/api/push-subscriptions/public-key/");
+
+export const savePushSubscription = (subscription: PushSubscription) => {
+  const json = subscription.toJSON();
+  if (!json?.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    throw new Error("Assinatura de push invalida.");
+  }
+  return apiFetch(`/api/push-subscriptions/`, {
+    method: "POST",
+    body: JSON.stringify({
+      endpoint: json.endpoint,
+      p256dh: json.keys?.p256dh,
+      auth: json.keys?.auth,
+    }),
+  });
+};
 
 // Drivers
 export const fetchDrivers = () =>

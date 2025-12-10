@@ -1,7 +1,16 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 
-from .models import DeliveryArea, DeliveryOrder, Driver, Garage, Vehicle, Route
+from .models import (
+    DeliveryArea,
+    DeliveryOrder,
+    Driver,
+    Garage,
+    Notification,
+    PushSubscription,
+    Vehicle,
+    Route,
+)
 
 
 @admin.register(Vehicle)
@@ -51,3 +60,16 @@ class RouteAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("name", "vehicle__plate", "vehicle__model")
     autocomplete_fields = ("vehicle",)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("title", "user", "order", "is_read", "created_at")
+    list_filter = ("is_read",)
+    search_fields = ("title", "body", "user__username", "user__email")
+
+
+@admin.register(PushSubscription)
+class PushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "endpoint", "created_at")
+    search_fields = ("endpoint", "user__username", "user__email")

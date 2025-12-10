@@ -1,0 +1,312 @@
+.wrapper {
+  position: relative;
+  --nb-accent: #f97316;
+  --nb-text: #3b342d;
+  --nb-muted-text: #6f6459;
+  --nb-meta-text: #8a7d71;
+  --nb-border: rgba(75, 66, 56, 0.18);
+  --nb-muted: rgba(249, 115, 22, 0.1);
+  --nb-warm: #fffaf5;
+  --nb-dark-bg: #1c1917;
+  --nb-dark-text: #f5e9dd;
+  --nb-dark-muted: #d9cbbd;
+}
+
+.bellButton {
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--nb-text);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bellButton:hover {
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--nb-accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 360px;
+  max-width: 90vw;
+  background: var(--nb-warm);
+  border: 1px solid var(--nb-border);
+  box-shadow: 0 12px 40px rgba(75, 66, 56, 0.12);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  z-index: 40;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--nb-border);
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.05));
+}
+
+.dropdownTitle {
+  margin: 0;
+  font-weight: 700;
+  color: var(--nb-text);
+}
+
+.dropdownSubtitle {
+  margin: 0.1rem 0 0 0;
+  font-size: 0.85rem;
+  color: var(--nb-muted-text);
+}
+
+.markAllButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--nb-border);
+  background: rgba(249, 115, 22, 0.08);
+  font-size: 0.8rem;
+  color: var(--nb-accent);
+  cursor: pointer;
+}
+
+.markAllButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.markAllButton:hover:not(:disabled) {
+  border-color: rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.14);
+}
+
+.list {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  border-bottom: 1px solid var(--nb-border);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item:hover {
+  background: var(--nb-muted);
+  transform: translateY(-1px);
+}
+
+.unread {
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.itemTitle {
+  margin: 0;
+  font-weight: 700;
+  color: var(--nb-text);
+}
+
+.itemBody {
+  margin: 0.35rem 0 0 0;
+  color: var(--nb-muted-text);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.itemMeta {
+  margin: 0.35rem 0 0 0;
+  color: var(--nb-meta-text);
+  font-size: 0.8rem;
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--nb-accent);
+  flex-shrink: 0;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: var(--nb-muted-text);
+  background: rgba(249, 115, 22, 0.06);
+  font-size: 0.9rem;
+}
+
+.pushHint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px dashed var(--nb-border);
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.pushTitle {
+  margin: 0;
+  font-weight: 700;
+  color: var(--nb-text);
+}
+
+.pushCopy {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.85rem;
+  color: var(--nb-muted-text);
+}
+
+.pushAction {
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.12);
+  color: var(--nb-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.pushAction:hover {
+  background: rgba(249, 115, 22, 0.2);
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+.retryButton {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--nb-border);
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--nb-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.retryButton:hover {
+  background: var(--nb-muted);
+}
+
+.dropdown ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown ::-webkit-scrollbar-thumb {
+  background: rgba(75, 66, 56, 0.3);
+  border-radius: 999px;
+}
+
+:global(.dark) .bellButton {
+  color: var(--nb-dark-text);
+}
+
+:global(.dark) .bellButton:hover {
+  background: rgba(249, 115, 22, 0.16);
+}
+
+:global(.dark) .dropdown {
+  background: var(--nb-dark-bg);
+  border-color: rgba(249, 115, 22, 0.32);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+:global(.dark) .dropdownHeader {
+  border-color: rgba(249, 115, 22, 0.28);
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.1));
+}
+
+:global(.dark) .dropdownSubtitle,
+:global(.dark) .itemBody,
+:global(.dark) .pushCopy,
+:global(.dark) .itemMeta,
+:global(.dark) .empty {
+  color: var(--nb-dark-muted);
+}
+
+:global(.dark) .dropdownTitle,
+:global(.dark) .itemTitle,
+:global(.dark) .pushTitle {
+  color: var(--nb-dark-text);
+}
+
+:global(.dark) .markAllButton {
+  border-color: rgba(249, 115, 22, 0.45);
+  color: var(--nb-dark-text);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+:global(.dark) .pushAction {
+  color: var(--nb-dark-text);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+:global(.dark) .item {
+  border-color: rgba(249, 115, 22, 0.22);
+}
+
+:global(.dark) .item:hover {
+  background: rgba(249, 115, 22, 0.16);
+}
+
+:global(.dark) .unread {
+  background: rgba(249, 115, 22, 0.18);
+}
+
+:global(.dark) .pushHint {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+:global(.dark) .retryButton {
+  border-color: rgba(249, 115, 22, 0.38);
+  color: var(--nb-dark-text);
+  background: rgba(249, 115, 22, 0.08);
+}
+
+:global(.dark) .retryButton:hover {
+  background: rgba(249, 115, 22, 0.12);
+}

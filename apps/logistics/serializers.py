@@ -2,7 +2,16 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 import math
 from django.contrib.gis.geos import Point
-from .models import DeliveryArea, DeliveryOrder, Driver, Garage, Vehicle, Route
+from .models import (
+    DeliveryArea,
+    DeliveryOrder,
+    Driver,
+    Garage,
+    Notification,
+    PushSubscription,
+    Vehicle,
+    Route,
+)
 
 class VehicleSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
@@ -159,6 +168,48 @@ class DeliveryOrderSerializer(serializers.ModelSerializer):
         data["driver_name"] = self.get_driver_name(instance)
         data["vehicle_plate"] = self.get_vehicle_plate(instance)
         return data
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    order_id = serializers.IntegerField(source="order.id", read_only=True)
+    target_url = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "title",
+            "body",
+            "is_read",
+            "created_at",
+            "order_id",
+            "target_url",
+        ]
+        read_only_fields = ["id", "title", "body", "created_at", "order_id", "target_url"]
+
+    def get_target_url(self, obj):
+        return obj.target_url
+
+
+class PushSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PushSubscription
+        fields = ["id", "endpoint", "p256dh", "auth", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        subscription, _ = PushSubscription.objects.update_or_create(
+            endpoint=validated_data["endpoint"],
+            defaults={
+                "user": user,
+                "p256dh": validated_data["p256dh"],
+                "auth": validated_data["auth"],
+                "user_agent": (request.META.get("HTTP_USER_AGENT", "")[:255] if request else ""),
+            },
+        )
+        return subscription
 
 
 class CoverageCheckSerializer(serializers.Serializer):

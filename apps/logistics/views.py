@@ -1,16 +1,30 @@
+from django.conf import settings
 from django.contrib.gis.geos import Point
-from rest_framework import permissions, viewsets, status as drf_status
+from rest_framework import permissions, viewsets, status as drf_status, mixins
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import requests
 
-from .models import DeliveryArea, DeliveryOrder, DeliveryStatus, Driver, Garage, Vehicle, VehicleStatus
+from .models import (
+    DeliveryArea,
+    DeliveryOrder,
+    DeliveryStatus,
+    Driver,
+    Garage,
+    Notification,
+    PushSubscription,
+    Vehicle,
+    VehicleStatus,
+)
 from .serializers import (
     CoverageCheckSerializer,
     DeliveryAreaSerializer,
     DeliveryOrderSerializer,
     DriverSerializer,
     GarageSerializer,
+    NotificationSerializer,
+    PushSubscriptionSerializer,
     VehicleSerializer,
 )
 
@@ -106,6 +120,35 @@ class CoverageCheckView(APIView):
                 "areas": matched_areas,
             }
         )
+
+
+class NotificationViewSet(
+    mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
+):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by("-created_at")
+
+    @action(detail=False, methods=["post"], url_path="mark-all-read")
+    def mark_all_read(self, request):
+        updated = self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({"updated": updated})
+
+
+class PushSubscriptionViewSet(
+    mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet
+):
+    serializer_class = PushSubscriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return PushSubscription.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=["get"], url_path="public-key")
+    def public_key(self, request):
+        return Response({"public_key": getattr(settings, "WEBPUSH_VAPID_PUBLIC_KEY", "")})
 
 
 class DashboardSummaryView(APIView):

@@ -32,6 +32,9 @@ npm install
 npm run dev -- --host --port 5173
 ```
 
+### Push notifications
+- Gere chaves VAPID (ex: `npx web-push generate-vapid-keys`) e preencha `WEBPUSH_VAPID_PUBLIC_KEY`, `WEBPUSH_VAPID_PRIVATE_KEY` e `WEBPUSH_VAPID_ADMIN_EMAIL` no `.env` do backend. O PWA se inscreve sozinho apos login e mostra o push quando uma nova OS e atribuida a um motorista.
+
 ## Endpoints principais
 - Auth: `POST /api/token/`, `POST /api/token/refresh/`
 - Veiculos: `/api/vehicles/`

@@ -20,6 +20,8 @@ from apps.logistics.views import (
     DeliveryOrderViewSet,
     DriverViewSet,
     GarageViewSet,
+    NotificationViewSet,
+    PushSubscriptionViewSet,
     VehicleViewSet,
 )
 from apps.accounts.views import UserViewSet, MeView
@@ -30,6 +32,8 @@ router.register(r'delivery-orders', DeliveryOrderViewSet)
 router.register(r'garages', GarageViewSet)
 router.register(r'delivery-areas', DeliveryAreaViewSet)
 router.register(r'users', UserViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'push-subscriptions', PushSubscriptionViewSet, basename='push-subscription')
 
 
 urlpatterns = [
