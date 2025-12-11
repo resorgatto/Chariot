@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import LoginPage from '@/features/auth/LoginPage';
@@ -14,10 +15,24 @@ import DriverOrdersPage from './pages/DriverOrdersPage';
 import ServiceBoardPage from './pages/ServiceBoardPage';
 
 function App() {
-  const isAdmin =
-    localStorage.getItem("is_staff") === "true" ||
-    localStorage.getItem("is_superuser") === "true";
-  const isDriver = localStorage.getItem("is_driver") === "true";
+  const readRole = () => ({
+    isAdmin:
+      localStorage.getItem("is_staff") === "true" ||
+      localStorage.getItem("is_superuser") === "true",
+    isDriver: localStorage.getItem("is_driver") === "true",
+  });
+
+  const [{ isAdmin, isDriver }, setRole] = useState(readRole);
+
+  useEffect(() => {
+    const handler = () => setRole(readRole());
+    window.addEventListener("storage", handler);
+    window.addEventListener("auth-changed", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("auth-changed", handler);
+    };
+  }, []);
 
   return (
     <Router>
@@ -98,6 +113,7 @@ function App() {
                   </Layout>
                 }
               />
+              <Route path="my-orders" element={<Navigate to="/dashboard" replace />} />
               <Route
                 path="/"
                 element={<Navigate to="/dashboard" replace />}
@@ -117,6 +133,7 @@ function App() {
                   </Layout>
                 }
               />
+              <Route path="dashboard" element={<Navigate to="/my-orders" replace />} />
               <Route path="/" element={<Navigate to="/my-orders" replace />} />
               <Route path="*" element={<Navigate to="/my-orders" replace />} />
             </>

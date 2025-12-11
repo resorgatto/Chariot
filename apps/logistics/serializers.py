@@ -200,14 +200,16 @@ class PushSubscriptionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         user = getattr(request, "user", None)
+        endpoint = validated_data["endpoint"]
+        defaults = {
+            "p256dh": validated_data["p256dh"],
+            "auth": validated_data["auth"],
+            "user_agent": (request.META.get("HTTP_USER_AGENT", "")[:255] if request else ""),
+        }
         subscription, _ = PushSubscription.objects.update_or_create(
-            endpoint=validated_data["endpoint"],
-            defaults={
-                "user": user,
-                "p256dh": validated_data["p256dh"],
-                "auth": validated_data["auth"],
-                "user_agent": (request.META.get("HTTP_USER_AGENT", "")[:255] if request else ""),
-            },
+            user=user,
+            endpoint=endpoint,
+            defaults=defaults,
         )
         return subscription
 

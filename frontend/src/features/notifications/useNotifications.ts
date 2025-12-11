@@ -31,10 +31,12 @@ export const useNotifications = () => {
     refetchInterval: 30000,
   })
 
-  const notificationList = useMemo(
-    () => (Array.isArray(notificationsQuery.data) ? notificationsQuery.data : []),
-    [notificationsQuery.data],
-  )
+  const notificationList = useMemo(() => {
+    const data = notificationsQuery.data
+    if (Array.isArray(data)) return data
+    if (data && Array.isArray((data as any).results)) return (data as any).results
+    return []
+  }, [notificationsQuery.data])
 
   const unreadCount = useMemo(
     () => notificationList.filter((n) => !n.is_read).length,

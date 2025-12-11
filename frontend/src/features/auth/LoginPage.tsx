@@ -25,15 +25,16 @@ const LoginPage = () => {
     setIsLoading(true)
 
     try {
-      await loginRequest(trimmedUsername, password)
+      const result = await loginRequest(trimmedUsername, password)
+      const me = result.me
       const isAdmin =
-        localStorage.getItem("is_staff") === "true" ||
-        localStorage.getItem("is_superuser") === "true"
-      const isDriver = localStorage.getItem("is_driver") === "true"
-      if (isAdmin) {
-        navigate("/dashboard", { replace: true })
-      } else if (isDriver) {
+        (me?.is_staff ?? false) || (me?.is_superuser ?? false) || localStorage.getItem("is_staff") === "true" || localStorage.getItem("is_superuser") === "true"
+      const isDriver = me?.is_driver ?? (localStorage.getItem("is_driver") === "true")
+
+      if (isDriver && !isAdmin) {
         navigate("/my-orders", { replace: true })
+      } else if (isAdmin) {
+        navigate("/dashboard", { replace: true })
       } else {
         navigate("/dashboard", { replace: true })
       }

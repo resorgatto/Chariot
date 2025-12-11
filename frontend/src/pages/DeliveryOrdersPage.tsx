@@ -13,6 +13,7 @@ import {
   fetchUsers,
   updateDeliveryOrder,
   updateVehicle,
+  deleteDeliveryOrder,
   DeliveryOrder,
   Driver,
   Vehicle,
@@ -71,6 +72,7 @@ const DeliveryOrdersPage = () => {
     pickup: false,
     dropoff: false,
   })
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -294,6 +296,23 @@ const DeliveryOrdersPage = () => {
     },
     [drivers, users]
   )
+
+  const handleDeleteOrder = async (orderId: number) => {
+    const confirmed = window.confirm(`Excluir a ordem #${orderId}? Essa ação não pode ser desfeita.`)
+    if (!confirmed) return
+    setDeletingId(orderId)
+    try {
+      await deleteDeliveryOrder(orderId)
+      setError("")
+      await loadData()
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Falha ao excluir ordem."
+      setError(message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -542,6 +561,15 @@ const DeliveryOrdersPage = () => {
                     aria-label="Editar ordem"
                   >
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDeleteOrder(order.id)}
+                    aria-label="Excluir ordem"
+                    disabled={deletingId === order.id}
+                  >
+                    {deletingId === order.id ? "…" : "×"}
                   </Button>
                 </div>
               </CardHeader>

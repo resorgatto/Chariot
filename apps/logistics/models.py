@@ -264,7 +264,7 @@ class PushSubscription(models.Model):
         related_name="push_subscriptions",
         verbose_name="Usuario",
     )
-    endpoint = models.URLField("Endpoint", unique=True)
+    endpoint = models.URLField("Endpoint", max_length=500)
     p256dh = models.CharField("Chave p256dh", max_length=255)
     auth = models.CharField("Chave auth", max_length=255)
     user_agent = models.CharField("User Agent", max_length=255, blank=True, default="")
@@ -272,6 +272,12 @@ class PushSubscription(models.Model):
 
     class Meta:
         unique_together = ("user", "endpoint")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "endpoint"],
+                name="unique_push_per_user_endpoint",
+            )
+        ]
         verbose_name = "Inscricao Push"
         verbose_name_plural = "Inscricoes Push"
 

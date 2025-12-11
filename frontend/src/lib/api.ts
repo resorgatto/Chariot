@@ -17,9 +17,19 @@ export const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem("auth");
+  localStorage.removeItem("is_staff");
+  localStorage.removeItem("is_superuser");
+  localStorage.removeItem("is_driver");
+  window.dispatchEvent(new Event("auth-changed"));
 };
 
-export async function loginRequest(username: string, password: string) {
+export type LoginResult = {
+  access: string;
+  refresh: string;
+  me?: MeResponse;
+};
+
+export async function loginRequest(username: string, password: string): Promise<LoginResult> {
   const response = await fetch(`${API_URL}/api/token/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -34,18 +44,27 @@ export async function loginRequest(username: string, password: string) {
   localStorage.setItem(ACCESS_TOKEN_KEY, data.access);
   localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh);
   localStorage.setItem("auth", "true");
+  // reset flags before preencher
+  localStorage.setItem("is_staff", "false");
+  localStorage.setItem("is_superuser", "false");
+  localStorage.setItem("is_driver", "false");
   // Fetch role info
+  let me: MeResponse | undefined;
   try {
-    const me = await fetch(`${API_URL}/api/me/`, {
+    me = await fetch(`${API_URL}/api/me/`, {
       headers: { Authorization: `Bearer ${data.access}` },
     }).then((r) => r.json());
     localStorage.setItem("is_staff", String(me.is_staff ?? false));
     localStorage.setItem("is_superuser", String(me.is_superuser ?? false));
     localStorage.setItem("is_driver", String(me.is_driver ?? false));
   } catch {
-    // swallow
+    // Se falhar, garante que flags anteriores nao ficam penduradas
+    localStorage.setItem("is_staff", "false");
+    localStorage.setItem("is_superuser", "false");
+    localStorage.setItem("is_driver", "false");
   }
-  return data;
+  window.dispatchEvent(new Event("auth-changed"));
+  return { access: data.access, refresh: data.refresh, me };
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -175,6 +194,11 @@ export type UserNotification = {
   created_at: string;
   order_id?: number | null;
   target_url?: string | null;
+};
+
+export type NotificationList = {
+  results: UserNotification[];
+  count?: number;
 };
 
 export type CoverageArea = {
@@ -364,7 +388,7 @@ export type MeResponse = {
 export const fetchMe = () => apiFetch<MeResponse>("/api/me/");
 
 export const fetchNotifications = () =>
-  apiFetch<UserNotification[]>("/api/notifications/");
+  apiFetch<NotificationList | UserNotification[]>("/api/notifications/");
 
 export const markNotificationRead = (id: number) =>
   apiFetch<UserNotification>(`/api/notifications/${id}/`, {
