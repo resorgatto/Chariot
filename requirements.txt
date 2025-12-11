@@ -10,3 +10,4 @@ pillow==11.0.0
 requests==2.32.3
 django-cors-headers==4.4.0
 pywebpush==1.14.0
+gunicorn==23.0.0
