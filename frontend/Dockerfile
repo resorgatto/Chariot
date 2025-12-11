@@ -4,8 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
+
 COPY . .
 
-EXPOSE 5173
+RUN npm run build
 
-CMD ["npm", "run", "dev", "--", "--host", "--port", "5173"]
+# Render injects $PORT; preview serves the built files
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "$PORT"]
