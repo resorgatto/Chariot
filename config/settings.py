@@ -38,6 +38,11 @@ ALLOWED_HOSTS = config(
     cast=Csv(),
 )
 
+# Render (e outros PaaS) expõem o host final em RENDER_EXTERNAL_HOSTNAME.
+RENDER_HOST = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_HOST and RENDER_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_HOST)
+
 # Default credentials (auto-create superuser if provided)
 DEFAULT_SUPERUSER_USERNAME = config("DEFAULT_SUPERUSER_USERNAME", default=None)
 DEFAULT_SUPERUSER_PASSWORD = config("DEFAULT_SUPERUSER_PASSWORD", default=None)
