@@ -381,7 +381,7 @@ const DeliveryOrdersPage = () => {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, pickup_cep: e.target.value }))
                   }
-                  required
+                  onBlur={() => handleCepLookup("pickup")}
                 />
                 <Button
                   type="button"
@@ -430,7 +430,7 @@ const DeliveryOrdersPage = () => {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, dropoff_cep: e.target.value }))
                   }
-                  required
+                  onBlur={() => handleCepLookup("dropoff")}
                 />
                 <Button
                   type="button"
