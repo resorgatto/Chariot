@@ -1,20 +1,24 @@
-FROM node:20-alpine
+### Build stage
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-
-# Install including dev deps (vite is devDependency). Render sets NODE_ENV=production by default,
-# so we override to ensure build tools are available.
 ENV NODE_ENV=development
 RUN npm install
 
 COPY . .
-
 RUN npm run build
 
-# Serve the built app
+### Runtime stage: serve static build
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+# Lightweight static server; avoids Vite preview port detection issues on Render
+RUN npm install -g serve
+
+COPY --from=build /app/dist ./dist
+
 ENV NODE_ENV=production
-# Render sets $PORT at runtime. Use sh -c so the variable is expanded.
 EXPOSE 4173
-CMD ["sh", "-c", "npm run preview -- --host 0.0.0.0 --port ${PORT:-4173}"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-4173}"]
