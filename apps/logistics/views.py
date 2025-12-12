@@ -208,7 +208,8 @@ class CepLookupView(APIView):
                 "https://nominatim.openstreetmap.org/search",
                 params={
                     "format": "json",
-                    "q": address_line,
+                    "postalcode": cep,
+                    "country": "Brazil",
                     "limit": 1,
                 },
                 headers={"User-Agent": "EcoFleet/1.0"},
