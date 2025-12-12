@@ -15,4 +15,6 @@ RUN npm run build
 
 # Serve the built app
 ENV NODE_ENV=production
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "$PORT"]
+# Render sets $PORT at runtime. Use sh -c so the variable is expanded.
+EXPOSE 4173
+CMD ["sh", "-c", "npm run preview -- --host 0.0.0.0 --port ${PORT:-4173}"]
