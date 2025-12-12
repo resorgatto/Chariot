@@ -267,6 +267,11 @@ export const updateVehicle = (
   );
 };
 
+export const deleteVehicle = (id: number) =>
+  apiFetch<void>(`/api/vehicles/${id}/`, {
+    method: "DELETE",
+  });
+
 export const fetchGarages = () =>
   apiFetch<{ results: Garage[]; count: number }>("/api/garages/");
 

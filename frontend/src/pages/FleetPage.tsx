@@ -10,6 +10,7 @@ import {
   fetchGarages,
   fetchVehicles,
   updateVehicle,
+  deleteVehicle,
   lookupCep,
   Garage,
   Vehicle,
@@ -44,6 +45,7 @@ const FleetPage = () => {
     useState<Record<number, boolean>>({})
   const [garageForm, setGarageForm] = useState<Record<number, string>>({})
   const [garageSaving, setGarageSaving] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
 
   const loadData = async () => {
@@ -187,6 +189,25 @@ const FleetPage = () => {
     }
   }
 
+  const handleDeleteVehicle = async (vehicle: Vehicle) => {
+    const confirmed = window.confirm(
+      `Remover o veiculo ${vehicle.plate}? Essa ação não pode ser desfeita.`
+    )
+    if (!confirmed) return
+    setDeletingId(vehicle.id)
+    try {
+      await deleteVehicle(vehicle.id)
+      setVehicles((prev) => prev.filter((v) => v.id !== vehicle.id))
+      setError("")
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao excluir veiculo."
+      setError(message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.titleRow}>
@@ -246,6 +267,15 @@ const FleetPage = () => {
                   </p>
                 )}
                 <div className={styles.cardFooter}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteVehicle(vehicle)}
+                    disabled={deletingId === vehicle.id}
+                    className={styles.fullWidthButton}
+                  >
+                    {deletingId === vehicle.id ? "Excluindo..." : "Excluir"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
