@@ -6,8 +6,6 @@ Aplicacao open source para operar frota, motoristas e ordens de entrega com vali
 ![Dashboard](docs/dashboard.png)
 ![Agenda O.S.](docs/service-board.png)
 
-> As imagens estao em `docs/`. Substitua pelos prints reais se preferir.
-
 ## Principais features
 - Autenticacao JWT e protecao por perfil (admin, motorista).
 - CRUD de veiculos (com foto, status e coordenadas), garagens e ordens de entrega.
